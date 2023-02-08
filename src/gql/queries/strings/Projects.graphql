@@ -1,0 +1,15 @@
+query Projects {
+	projects {
+		edges {
+			node {
+				id
+				name
+				updatedAt
+				team {
+					id
+					name
+				}
+			}
+		}
+	}
+}
