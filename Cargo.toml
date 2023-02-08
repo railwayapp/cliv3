@@ -1,0 +1,24 @@
+[package]
+name = "railway"
+version = "0.1.0"
+edition = "2021"
+
+proc-macro = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+clap = { version = "4.1.4", features = ["derive", "suggestions"] }
+colored = "2.0.0"
+dirs = "4.0.0"
+dialoguer = { version = "0.10.3", features = ["fuzzy-select"] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.92"
+reqwest = { version = "0.11.14", default-features = false, features = [
+  "rustls-tls",
+] }
+chrono = "0.4.23"
+graphql_client = { version = "0.12.0", features = ["reqwest-rustls"] }
+paste = "1.0.11"
+tokio = { version = "1.25.0", features = ["full"] }
