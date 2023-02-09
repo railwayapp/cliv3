@@ -1,10 +1,21 @@
 use super::*;
 
+use clap::CommandFactory;
+use clap_complete::{generate, Shell};
+use std::io;
+
 /// Generate completion script
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    shell: Shell,
+}
 
 pub async fn command(args: Args) -> Result<()> {
-    unimplemented!("completion command is not implemented yet");
+    generate(
+        args.shell,
+        &mut crate::Args::command(),
+        env!("CARGO_PKG_NAME"),
+        &mut io::stdout(),
+    );
     Ok(())
 }

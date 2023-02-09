@@ -20,8 +20,7 @@ pub async fn command(args: Args) -> Result<()> {
     )
     .await?;
 
-    let body: queries::project::ResponseData =
-        res.data.context("Failed to retrieve response body")?;
+    let body = res.data.context("Failed to retrieve response body")?;
 
     println!("Project: {}", body.project.name.purple().bold());
     println!(

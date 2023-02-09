@@ -16,7 +16,7 @@ mod macros;
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
 #[clap(propagate_version = true)]
-struct Args {
+pub struct Args {
     #[clap(subcommand)]
     command: Commands,
 }

@@ -20,46 +20,8 @@ pub async fn command(args: Args) -> Result<()> {
     )
     .await?;
 
-    let body: queries::projects::ResponseData =
-        res.data.context("Failed to retrieve response body")?;
+    let body = res.data.context("Failed to retrieve response body")?;
 
-    // println!("Project: {}", body.project.name.purple().bold());
-    // println!(
-    //     "Environment: {}",
-    //     body.project
-    //         .environments
-    //         .edges
-    //         .iter()
-    //         .map(|env| &env.node)
-    //         .find(|env| env.id == linked_project.environment)
-    //         .context("Environment not found!")?
-    //         .name
-    //         .blue()
-    //         .bold()
-    // );
-    // println!("Plugins:");
-    // for plugin in body
-    //     .project
-    //     .plugins
-    //     .edges
-    //     .iter()
-    //     .map(|plugin| &plugin.node)
-    //     .into_iter()
-    // {
-    //     println!("{}", format!("{:?}", plugin.name).dimmed().bold());
-    // }
-
-    // println!("Services:");
-    // for service in body
-    //     .project
-    //     .services
-    //     .edges
-    //     .iter()
-    //     .map(|service| &service.node)
-    //     .into_iter()
-    // {
-    //     println!("{}", service.name.dimmed().bold());
-    // }
     let mut projects: Vec<_> = body
         .projects
         .edges
