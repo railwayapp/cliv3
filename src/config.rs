@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use inquire::ui::{Attributes, RenderConfig, StyleSheet, Styled};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -107,6 +108,27 @@ impl Configs {
             .remove(&path)
             .context("Project not found! Run `railway link` to link to a project")?;
         Ok(project)
+    }
+
+    pub fn get_render_config(&self) -> RenderConfig {
+        RenderConfig::default_colored()
+            .with_help_message(
+                StyleSheet::new()
+                    .with_fg(inquire::ui::Color::LightMagenta)
+                    .with_attr(Attributes::BOLD),
+            )
+            .with_answer(
+                StyleSheet::new()
+                    .with_fg(inquire::ui::Color::LightCyan)
+                    .with_attr(Attributes::BOLD),
+            )
+            .with_prompt_prefix(
+                Styled::new("?").with_style_sheet(
+                    StyleSheet::new()
+                        .with_fg(inquire::ui::Color::LightCyan)
+                        .with_attr(Attributes::BOLD),
+                ),
+            )
     }
 
     pub fn write(&self) -> Result<()> {

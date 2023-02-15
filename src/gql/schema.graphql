@@ -1,8 +1,28 @@
-# Exposes a URL that specifies the behavior of this scalar.
-directive @specifiedBy(
-	# The URL that specifies the behavior of this scalar.
-	url: String!
-) on SCALAR
+"""
+The aggregated usage of a single measurement.
+"""
+type AggregatedUsage {
+	"""
+	The measurement that was aggregated.
+	"""
+	measurement: MetricMeasurement!
+
+	"""
+	The tags that were used to group the metric. Only the tags that were used in the `groupBy` will be present.
+	"""
+	tags: MetricTags!
+
+	"""
+	The aggregated value.
+	"""
+	value: Float!
+}
+
+type AllDomains {
+	customDomains: [CustomDomain!]!
+	serviceDomains: [ServiceDomain!]!
+}
+
 type ApiToken implements Node {
 	displayToken: String!
 	id: ID!
@@ -43,15 +63,15 @@ input ConfigureSharedVariableInput {
 	projectId: String!
 }
 
-type CustomDomain implements Node {
+type CustomDomain implements Domain {
 	cnameCheck: CnameCheck!
-	createdAt: DateTime!
+	createdAt: DateTime
 	deletedAt: DateTime
 	domain: String!
 	environmentId: String!
 	id: ID!
-	serviceId: String
-	updatedAt: DateTime!
+	serviceId: String!
+	updatedAt: DateTime
 }
 
 input CustomDomainCreateInput {
@@ -60,9 +80,9 @@ input CustomDomainCreateInput {
 	serviceId: String!
 }
 
-# A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the
-# `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO
-# 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
 scalar DateTime
 
 type Deployment implements Node {
@@ -114,14 +134,18 @@ input DeploymentTriggerUpdateInput {
 	rootDirectory: String
 }
 
+interface Domain {
+	createdAt: DateTime
+	deletedAt: DateTime
+	domain: String!
+	environmentId: String!
+	id: ID!
+	serviceId: String!
+	updatedAt: DateTime
+}
+
 type Environment implements Node {
 	createdAt: DateTime!
-	customDomains(
-		after: String
-		before: String
-		first: Int
-		last: Int
-	): EnvironmentCustomDomainsConnection!
 	deletedAt: DateTime
 	deploymentTriggers(
 		after: String
@@ -160,14 +184,14 @@ input EnvironmentCreateInput {
 	projectId: String!
 }
 
-type EnvironmentCustomDomainsConnection {
-	edges: [EnvironmentCustomDomainsConnectionEdge!]!
+type EnvironmentDeploymentTriggersConnection {
+	edges: [EnvironmentDeploymentTriggersConnectionEdge!]!
 	pageInfo: PageInfo!
 }
 
-type EnvironmentCustomDomainsConnectionEdge {
+type EnvironmentDeploymentTriggersConnectionEdge {
 	cursor: String!
-	node: CustomDomain!
+	node: DeploymentTrigger!
 }
 
 type EnvironmentDeploymentsConnection {
@@ -178,16 +202,6 @@ type EnvironmentDeploymentsConnection {
 type EnvironmentDeploymentsConnectionEdge {
 	cursor: String!
 	node: Deployment!
-}
-
-type EnvironmentDeploymentTriggersConnection {
-	edges: [EnvironmentDeploymentTriggersConnectionEdge!]!
-	pageInfo: PageInfo!
-}
-
-type EnvironmentDeploymentTriggersConnectionEdge {
-	cursor: String!
-	node: DeploymentTrigger!
 }
 
 type EnvironmentMeta {
@@ -218,6 +232,22 @@ type EnvironmentVariablesConnectionEdge {
 	node: Variable!
 }
 
+"""
+The estimated usage of a single measurement.
+"""
+type EstimatedUsage {
+	"""
+	The estimated value.
+	"""
+	estimatedValue: Float!
+
+	"""
+	The measurement that was estimated.
+	"""
+	measurement: MetricMeasurement!
+	projectId: String!
+}
+
 type Event implements Node {
 	action: String!
 	createdAt: DateTime!
@@ -230,6 +260,20 @@ type Event implements Node {
 	projectId: String!
 }
 
+type ExecutionTime {
+	projectId: String!
+
+	"""
+	The total number of minutes that the project has been actively running for.
+	"""
+	totalTimeMinutes: Float!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
 input JobApplicationCreateInput {
 	email: String!
 	jobId: String!
@@ -238,14 +282,24 @@ input JobApplicationCreateInput {
 	why: String!
 }
 
-# The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-scalar JSON
-
+"""
+A single sample of a metric.
+"""
 type Metric {
+	"""
+	The timestamp of the sample. Represented has number of seconds since the Unix epoch.
+	"""
 	ts: Int!
+
+	"""
+	The value of the sample.
+	"""
 	value: Float!
 }
 
+"""
+A thing that can be measured on Railway.
+"""
 enum MetricMeasurement {
 	CPU_USAGE
 	MEASUREMENT_UNSPECIFIED
@@ -255,98 +309,263 @@ enum MetricMeasurement {
 	UNRECOGNIZED
 }
 
+"""
+A property that can be used to group metrics.
+"""
+enum MetricTag {
+	DEPLOYMENT_ID
+	ENVIRONMENT_ID
+	KEY_UNSPECIFIED
+	PLUGIN_ID
+	PROJECT_ID
+	SERVICE_ID
+	UNRECOGNIZED
+}
+
+"""
+The tags that were used to group the metric.
+"""
+type MetricTags {
+	deploymentId: String
+	environmentId: String
+	pluginId: String
+	projectId: String
+	serviceId: String
+}
+
+"""
+The result of a metrics query.
+"""
 type MetricsResult {
+	"""
+	The measurement of the metric.
+	"""
 	measurement: MetricMeasurement!
+
+	"""
+	The tags that were used to group the metric. Only the tags that were used to by will be present.
+	"""
+	tags: MetricTags!
+
+	"""
+	The samples of the metric.
+	"""
 	values: [Metric!]!
 }
 
 type Mutation {
-	# Creates a new API token.
+	"""
+	Creates a new API token.
+	"""
 	apiTokenCreate(input: ApiTokenCreateInput!): String!
-	# Deletes an API token.
+
+	"""
+	Deletes an API token.
+	"""
 	apiTokenDelete(id: String!): Boolean!
 	configureSharedVariable(input: ConfigureSharedVariableInput!): Variable!
-	# Creates a new custom domain.
+
+	"""
+	Creates a new custom domain.
+	"""
 	customDomainCreate(input: CustomDomainCreateInput!): CustomDomain!
-	# Deletes a custom domain.
+
+	"""
+	Deletes a custom domain.
+	"""
 	customDomainDelete(id: String!): Boolean!
-	# Cancels a deployment.
+
+	"""
+	Cancels a deployment.
+	"""
 	deploymentCancel(id: String!): Boolean!
-	# Redeploys a deployment.
+
+	"""
+	Redeploys a deployment.
+	"""
 	deploymentRedeploy(id: String!): Deployment!
-	# Removes a deployment.
+
+	"""
+	Removes a deployment.
+	"""
 	deploymentRemove(id: String!): Boolean!
-	# Restarts a deployment.
+
+	"""
+	Restarts a deployment.
+	"""
 	deploymentRestart(id: String!): Boolean!
-	# Rolls back to a deployment.
+
+	"""
+	Rolls back to a deployment.
+	"""
 	deploymentRollback(id: String!): Boolean!
 	deploymentTriggerUpdate(
 		id: String!
 		input: DeploymentTriggerUpdateInput!
 	): DeploymentTrigger!
-	# Creates a new environment.
+
+	"""
+	Creates a new environment.
+	"""
 	environmentCreate(input: EnvironmentCreateInput!): Environment!
-	# Deletes an environment.
+
+	"""
+	Deletes an environment.
+	"""
 	environmentDelete(id: String!): Boolean!
-	# Creates a new job application.
+
+	"""
+	Creates a new job application.
+	"""
 	jobApplicationCreate(input: JobApplicationCreateInput!): Boolean!
-	# Creates a new plugin.
+
+	"""
+	Creates a new plugin.
+	"""
 	pluginCreate(input: PluginCreateInput!): Plugin!
-	# Deletes a plugin.
+
+	"""
+	Deletes a plugin.
+	"""
 	pluginDelete(id: String!): Boolean!
-	# Restarts a plugin.
+
+	"""
+	Restarts a plugin.
+	"""
 	pluginRestart(id: String!, input: PluginRestartInput!): Plugin!
-	# Updates an existing plugin.
+
+	"""
+	Updates an existing plugin.
+	"""
 	pluginUpdate(id: String!, input: PluginUpdateInput!): Plugin!
 	preferencesUpdate(input: PreferencesUpdateData!): Preferences!
-	# Claims a project.
+
+	"""
+	Claims a project.
+	"""
 	projectClaim(id: String!): Project!
-	# Creates a new project.
+
+	"""
+	Creates a new project.
+	"""
 	projectCreate(input: ProjectCreateInput!): Project!
-	# Deletes a project.
+
+	"""
+	Deletes a project.
+	"""
 	projectDelete(id: String!): Boolean!
-	# Updates a project.
+
+	"""
+	Updates a project.
+	"""
 	projectUpdate(id: String!, input: ProjectUpdateInput!): Project!
-	# Updates the ReferralInfo for the authenticated user.
+
+	"""
+	Deletes a ProviderAuth.
+	"""
+	providerAuthRemove(id: String!): Boolean!
+
+	"""
+	Updates the ReferralInfo for the authenticated user.
+	"""
 	referralInfoUpdate(input: ReferralInfoUpdateInput!): ReferralInfo!
-	# Creates a new service.
+
+	"""
+	Creates a new service.
+	"""
 	serviceCreate(input: ServiceCreateInput!): Service!
-	# Deletes a service.
+
+	"""
+	Deletes a service.
+	"""
 	serviceDelete(id: String!): Boolean!
-	# Creates a new service domain.
+
+	"""
+	Creates a new service domain.
+	"""
 	serviceDomainCreate(input: ServiceDomainCreateInput!): ServiceDomain!
-	# Deletes a service domain.
+
+	"""
+	Deletes a service domain.
+	"""
 	serviceDomainDelete(id: String!): Boolean!
-	# Updates a service domain.
+
+	"""
+	Updates a service domain.
+	"""
 	serviceDomainUpdate(input: ServiceDomainUpdateInput!): Boolean!
-	# Update a service instance
+
+	"""
+	Update a service instance
+	"""
 	serviceInstanceUpdate(
 		input: ServiceInstanceUpdateInput!
 		serviceId: String!
 	): Boolean!
-	# Updates a service.
+
+	"""
+	Updates a service.
+	"""
 	serviceUpdate(id: String!, input: ServiceUpdateInput!): Service!
-	# Bans a team.
+
+	"""
+	Creates a support request.
+	"""
+	supportRequest(input: SupportRequestInput!): Boolean!
+
+	"""
+	Bans a team.
+	"""
 	teamBan(id: String!, input: TeamBanInput!): Boolean!
-	# Stops all deployments and plugins for a team.
+
+	"""
+	Stops all deployments and plugins for a team.
+	"""
 	teamResourcesStop(id: String!, input: TeamResourcesStopInput): Boolean!
-	# Unbans a team.
+
+	"""
+	Unbans a team.
+	"""
 	teamUnban(id: String!): Boolean!
-	# Creates a template.
+
+	"""
+	Creates a template.
+	"""
 	templateCreate(input: TemplateCreateInput!): Template!
-	# Deletes a template.
+
+	"""
+	Deletes a template.
+	"""
 	templateDelete(id: String!): Boolean!
-	# Deploys a template.
+
+	"""
+	Deploys a template.
+	"""
 	templateDeploy(input: TemplateDeployInput!): TemplateDeployPayload!
-	# Updates a template.
+
+	"""
+	Updates a template.
+	"""
 	templateUpdate(id: String!, input: TemplateUpdateInput!): Template!
-	# Set flags on the authenticated user.
+
+	"""
+	Set flags on the authenticated user.
+	"""
 	userFlagsSet(input: UserFlagsSetInput!): Boolean!
-	# Upserts a collection of variables.
+
+	"""
+	Upserts a collection of variables.
+	"""
 	variableCollectionUpsert(input: VariableCollectionUpsertInput!): Boolean!
-	# Deletes a variable.
+
+	"""
+	Deletes a variable.
+	"""
 	variableDelete(input: VariableDeleteInput!): Boolean!
-	# Upserts a variable.
+
+	"""
+	Upserts a variable.
+	"""
 	variableUpsert(input: VariableUpsertInput!): Boolean!
 }
 
@@ -395,7 +614,6 @@ enum PluginStatus {
 }
 
 enum PluginType {
-	env
 	mongodb
 	mysql
 	postgresql
@@ -509,16 +727,6 @@ input ProjectCreateRepo {
 	fullRepoName: String!
 }
 
-type ProjectDeploymentsConnection {
-	edges: [ProjectDeploymentsConnectionEdge!]!
-	pageInfo: PageInfo!
-}
-
-type ProjectDeploymentsConnectionEdge {
-	cursor: String!
-	node: Deployment!
-}
-
 type ProjectDeploymentTriggersConnection {
 	edges: [ProjectDeploymentTriggersConnectionEdge!]!
 	pageInfo: PageInfo!
@@ -527,6 +735,16 @@ type ProjectDeploymentTriggersConnection {
 type ProjectDeploymentTriggersConnectionEdge {
 	cursor: String!
 	node: DeploymentTrigger!
+}
+
+type ProjectDeploymentsConnection {
+	edges: [ProjectDeploymentsConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type ProjectDeploymentsConnectionEdge {
+	cursor: String!
+	node: Deployment!
 }
 
 type ProjectEnvironmentsConnection {
@@ -613,6 +831,14 @@ type ProjectWebhooksConnectionEdge {
 	node: ProjectWebhook!
 }
 
+type ProviderAuth implements Node {
+	email: String!
+	id: ID!
+	metadata: JSON!
+	provider: String!
+	userId: String!
+}
+
 type PublicStats {
 	totalDeployments: Int!
 	totalProjects: Int!
@@ -627,9 +853,15 @@ type Query {
 		last: Int
 	): QueryApiTokensConnection!
 	changelogBlockImage(id: String!): String!
-	# Gets a deployment by ID.
-	deployment(id: String!): Deployment!
-	# All deployment triggers.
+
+	"""
+	Checks the cname status of a domain
+	"""
+	checkCname(id: String!): CnameCheck!
+
+	"""
+	All deployment triggers.
+	"""
 	deploymentTriggers(
 		after: String
 		before: String
@@ -639,6 +871,34 @@ type Query {
 		projectId: String!
 		serviceId: String!
 	): QueryDeploymentTriggersConnection!
+
+	"""
+	All domains
+	"""
+	domains(
+		environmentId: String!
+		projectId: String!
+		serviceId: String!
+	): AllDomains!
+
+	"""
+	Get the estimated total cost of the project at the end of the current billing cycle
+	"""
+	estimatedUsage(
+		"""
+		What to group the aggregated usage by. By default, it is grouped over the entire project.
+		"""
+		groupBy: [MetricTag!]
+
+		"""
+		Whether to include deleted projects in estimations.
+		"""
+		includeDeleted: Boolean
+		measurements: [MetricMeasurement!]!
+		projectId: String
+		teamId: String
+		userId: String
+	): [EstimatedUsage!]!
 	events(
 		after: String
 		before: String
@@ -647,16 +907,61 @@ type Query {
 		last: Int
 		projectId: String!
 	): QueryEventsConnection!
-	# Get metrics for a project, environment, and service
+
+	"""
+	Get the execution time of projects
+	"""
+	executionTime(
+		"""
+		Whether to get execution for deleted projects.
+		"""
+		includeDeleted: Boolean
+		projectId: String
+		teamId: String
+		userId: String
+	): [ExecutionTime!]!
+	me: User!
+
+	"""
+	Get metrics for a project, environment, and service
+	"""
 	metrics(
+		"""
+		The averaging window when computing CPU usage. By default, it is the same as the `sampleRateSeconds`.
+		"""
 		averagingWindowSeconds: Int
+
+		"""
+		The end of the period to get metrics for. If not provided, the current datetime is used.
+		"""
 		endDate: DateTime
-		environmentId: String!
+		environmentId: String
+
+		"""
+		What to group the aggregated usage by. By default, it is grouped over the entire project.
+		"""
+		groupBy: [MetricTag!]
+
+		"""
+		Whether or not to include deleted projects in the results
+		"""
+		includeDeleted: Boolean
 		measurements: [MetricMeasurement!]!
 		pluginId: String
+		projectId: String
+
+		"""
+		The frequency of data points in the response. If the `sampleRateSeconds` is 60, then the response will contain one data point per minute.
+		"""
 		sampleRateSeconds: Int
 		serviceId: String
+
+		"""
+		The start of the period to get metrics for.
+		"""
 		startDate: DateTime!
+		teamId: String
+		userId: String
 	): [MetricsResult!]!
 	node(id: ID!): Node
 	nodes(ids: [ID!]!): [Node]!
@@ -666,14 +971,31 @@ type Query {
 		after: String
 		before: String
 		first: Int
+		includeDeleted: Boolean
 		last: Int
 		teamId: String
+		userId: String
 	): QueryProjectsConnection!
-	# Get public Railway stats. Primarily used for the landing page.
+
+	"""
+	Get public Railway stats. Primarily used for the landing page.
+	"""
 	publicStats: PublicStats!
 	referralInfo: ReferralInfo!
+
+	"""
+	Suggeted service domain
+	"""
+	suggestedServiceDomain(
+		environmentId: String!
+		projectId: String!
+		serviceId: String!
+	): String!
 	template(code: String, owner: String, repo: String): Template!
-	# Gets the README for a template.
+
+	"""
+	Gets the README for a template.
+	"""
 	templateReadme(code: String!): TemplateReadme!
 	templates(
 		after: String
@@ -681,19 +1003,50 @@ type Query {
 		first: Int
 		last: Int
 	): QueryTemplatesConnection!
+
+	"""
+	Get the usage for a single project or all projects for a user/team. If no `projectId` or `teamId` is provided, the usage for the current user is returned.
+	"""
+	usage(
+		endDate: DateTime
+
+		"""
+		What to group the aggregated usage by. By default, it is grouped over the entire project.
+		"""
+		groupBy: [MetricTag!]
+
+		"""
+		Whether to include deleted projects in the usage.
+		"""
+		includeDeleted: Boolean
+		measurements: [MetricMeasurement!]!
+		projectId: String
+		startDate: DateTime
+		teamId: String
+		userId: String
+	): [AggregatedUsage!]!
 	userTemplates(
 		after: String
 		before: String
 		first: Int
 		last: Int
 	): QueryUserTemplatesConnection!
-	# All variables by pluginId or serviceId. If neither are provided, all shared variables are returned.
+
+	"""
+	All variables by pluginId or serviceId. If neither are provided, all shared variables are returned.
+	"""
 	variables(
 		environmentId: String!
-		# Provide a pluginId to get all variables for a specific plugin.
+
+		"""
+		Provide a pluginId to get all variables for a specific plugin.
+		"""
 		pluginId: String
 		projectId: String!
-		# Provide a serviceId to get all variables for a specific service.
+
+		"""
+		Provide a serviceId to get all variables for a specific service.
+		"""
 		serviceId: String
 		unrendered: Boolean
 	): ServiceVariables!
@@ -828,10 +1181,15 @@ type ServiceDeploymentsConnectionEdge {
 	node: Deployment!
 }
 
-type ServiceDomain implements Node {
+type ServiceDomain implements Domain {
+	createdAt: DateTime
+	deletedAt: DateTime
 	domain: String!
 	environmentId: String!
 	id: ID!
+	serviceId: String!
+	suffix: String
+	updatedAt: DateTime
 }
 
 input ServiceDomainCreateInput {
@@ -850,6 +1208,7 @@ type ServiceInstance implements Node {
 	builder: Builder!
 	createdAt: DateTime!
 	deletedAt: DateTime
+	domains: AllDomains!
 	environmentId: String!
 	healthcheckPath: String
 	healthcheckTimeout: Int
@@ -917,10 +1276,16 @@ input ServiceUpdateInput {
 	name: String
 }
 
-# The ServiceVariables scalar type represents values as the TypeScript type:
-# Record<string, string>. Example: "{ foo: 'bar', baz: 'qux' }"
-
+"""
+The ServiceVariables scalar type represents values as the TypeScript type: Record<string, string>. Example: "{ foo: 'bar', baz: 'qux' }"
+"""
 scalar ServiceVariables
+
+input SupportRequestInput {
+	isPurchasing: Boolean
+	isTechnical: Boolean
+	text: String!
+}
 
 type Team implements Node {
 	avatar: String
@@ -1012,16 +1377,6 @@ input TemplateServiceCreateInput {
 	config: TemplateServiceConfig!
 }
 
-type TemplateServicesConnection {
-	edges: [TemplateServicesConnectionEdge!]!
-	pageInfo: PageInfo!
-}
-
-type TemplateServicesConnectionEdge {
-	cursor: String!
-	node: TemplateService!
-}
-
 type TemplateServiceSource {
 	serviceName: String!
 	serviceSource: String!
@@ -1032,6 +1387,16 @@ input TemplateServiceUpdateInput {
 	id: String
 }
 
+type TemplateServicesConnection {
+	edges: [TemplateServicesConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type TemplateServicesConnectionEdge {
+	cursor: String!
+	node: TemplateService!
+}
+
 input TemplateUpdateInput {
 	config: TemplateConfig!
 	demoProjectId: String
@@ -1039,13 +1404,27 @@ input TemplateUpdateInput {
 	services: [TemplateServiceUpdateInput!]!
 }
 
-# The `Upload` scalar type represents a file upload.
+"""
+The `Upload` scalar type represents a file upload.
+"""
 scalar Upload
 
 type User implements Node {
 	email: String!
 	id: ID!
 	name: String
+	projects(
+		after: String
+		before: String
+		first: Int
+		last: Int
+	): UserProjectsConnection!
+	teams(
+		after: String
+		before: String
+		first: Int
+		last: Int
+	): UserTeamsConnection!
 }
 
 enum UserFlag {
@@ -1055,6 +1434,26 @@ enum UserFlag {
 
 input UserFlagsSetInput {
 	flags: [UserFlag!]!
+}
+
+type UserProjectsConnection {
+	edges: [UserProjectsConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type UserProjectsConnectionEdge {
+	cursor: String!
+	node: Project!
+}
+
+type UserTeamsConnection {
+	edges: [UserTeamsConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type UserTeamsConnectionEdge {
+	cursor: String!
+	node: Team!
 }
 
 type Variable implements Node {
@@ -1073,7 +1472,10 @@ type Variable implements Node {
 input VariableCollectionUpsertInput {
 	environmentId: String!
 	projectId: String!
-	# When set to true, removes all existing variables before upserting the new collection.
+
+	"""
+	When set to true, removes all existing variables before upserting the new collection.
+	"""
 	replace: Boolean = false
 	serviceId: String
 	variables: ServiceVariables!

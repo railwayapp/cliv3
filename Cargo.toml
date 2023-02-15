@@ -12,7 +12,6 @@ anyhow = "1.0.69"
 clap = { version = "4.1.4", features = ["derive", "suggestions"] }
 colored = "2.0.0"
 dirs = "4.0.0"
-dialoguer = { version = "0.10.3", features = ["fuzzy-select"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.92"
 reqwest = { version = "0.11.14", default-features = false, features = [
@@ -24,3 +23,11 @@ paste = "1.0.11"
 tokio = { version = "1.25.0", features = ["full"] }
 clap_complete = "4.1.1"
 open = "3.2.0"
+inquire = "0.5.3"
+tui = "0.19.0"
+crossterm = "0.26.0"
+hyper = { version = "1.0.0-rc.2", features = ["server", "http1"] }
+base64 = "0.21.0"
+http-body-util = "0.1.0-rc.2"
+rand = "0.8.5"
+hostname = "0.3.1"
