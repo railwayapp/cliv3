@@ -5,8 +5,8 @@ use super::*;
 pub struct Args {}
 
 pub async fn command(args: Args) -> Result<()> {
-    let config = Configs::new()?;
-    let client = GQLClient::new_authorized(&config)?;
+    let configs = Configs::new()?;
+    let client = GQLClient::new_authorized(&configs)?;
     let vars = queries::user_meta::Variables {};
 
     let res = post_graphql::<queries::UserMeta, _>(

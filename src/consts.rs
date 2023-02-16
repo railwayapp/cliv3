@@ -3,3 +3,5 @@ pub const fn get_user_agent() -> &'static str {
 }
 
 pub const TICK_STRING: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ";
+
+pub const PLUGINS: &[&str] = &["PostgreSQL", "MySQL", "Redis", "MongoDB"];

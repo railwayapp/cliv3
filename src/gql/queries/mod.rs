@@ -24,3 +24,19 @@ pub struct Projects;
     response_derives = "Debug"
 )]
 pub struct UserMeta;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/ProjectPlugins.graphql",
+    response_derives = "Debug"
+)]
+pub struct ProjectPlugins;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/TwoFactorInfo.graphql",
+    response_derives = "Debug"
+)]
+pub struct TwoFactorInfo;

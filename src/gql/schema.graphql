@@ -282,6 +282,11 @@ input JobApplicationCreateInput {
 	why: String!
 }
 
+type Log {
+	message: String!
+	timestamp: String!
+}
+
 """
 A single sample of a metric.
 """
@@ -466,6 +471,16 @@ type Mutation {
 	providerAuthRemove(id: String!): Boolean!
 
 	"""
+	Generates a new set of recovery codes for the authenticated user.
+	"""
+	recoveryCodeGenerate: RecoveryCodes!
+
+	"""
+	Validates a recovery code.
+	"""
+	recoveryCodeValidate(input: RecoveryCodeValidateInput!): Boolean!
+
+	"""
 	Updates the ReferralInfo for the authenticated user.
 	"""
 	referralInfoUpdate(input: ReferralInfoUpdateInput!): ReferralInfo!
@@ -547,6 +562,26 @@ type Mutation {
 	Updates a template.
 	"""
 	templateUpdate(id: String!, input: TemplateUpdateInput!): Template!
+
+	"""
+	Setup 2FA authorization for authenticated user.
+	"""
+	twoFactorInfoCreate(input: TwoFactorInfoCreateInput!): RecoveryCodes!
+
+	"""
+	Deletes the TwoFactorInfo for the authenticated user.
+	"""
+	twoFactorInfoDelete: Boolean!
+
+	"""
+	Generates the 2FA app secret for the authenticated user.
+	"""
+	twoFactorInfoSecret: TwoFactorInfoSecret!
+
+	"""
+	Validates the token for a 2FA action or for a login request.
+	"""
+	twoFactorInfoValidate(input: TwoFactorInfoValidateInput!): Boolean!
 
 	"""
 	Set flags on the authenticated user.
@@ -852,12 +887,34 @@ type Query {
 		first: Int
 		last: Int
 	): QueryApiTokensConnection!
+
+	"""
+	Fetch logs for a build
+	"""
+	buildLogs(
+		deploymentId: String!
+		endDate: DateTime
+		filter: String
+		limit: Int
+		startDate: DateTime
+	): [Log!]!
 	changelogBlockImage(id: String!): String!
 
 	"""
 	Checks the cname status of a domain
 	"""
 	checkCname(id: String!): CnameCheck!
+
+	"""
+	Fetch logs for a deployment
+	"""
+	deploymentLogs(
+		deploymentId: String!
+		endDate: DateTime
+		filter: String
+		limit: Int
+		startDate: DateTime
+	): [Log!]!
 
 	"""
 	All deployment triggers.
@@ -885,11 +942,6 @@ type Query {
 	Get the estimated total cost of the project at the end of the current billing cycle
 	"""
 	estimatedUsage(
-		"""
-		What to group the aggregated usage by. By default, it is grouped over the entire project.
-		"""
-		groupBy: [MetricTag!]
-
 		"""
 		Whether to include deleted projects in estimations.
 		"""
@@ -965,6 +1017,18 @@ type Query {
 	): [MetricsResult!]!
 	node(id: ID!): Node
 	nodes(ids: [ID!]!): [Node]!
+
+	"""
+	Fetch logs for a plugin
+	"""
+	pluginLogs(
+		endDate: DateTime
+		environmentId: String!
+		filter: String
+		limit: Int
+		pluginId: String!
+		startDate: DateTime
+	): [Log!]!
 	preferences(token: String): Preferences!
 	project(id: String!): Project!
 	projects(
@@ -1003,6 +1067,11 @@ type Query {
 		first: Int
 		last: Int
 	): QueryTemplatesConnection!
+
+	"""
+	Gets the TwoFactorInfo for the authenticated user.
+	"""
+	twoFactorInfo: TwoFactorInfo!
 
 	"""
 	Get the usage for a single project or all projects for a user/team. If no `projectId` or `teamId` is provided, the usage for the current user is returned.
@@ -1110,6 +1179,15 @@ type QueryUserTemplatesConnection {
 type QueryUserTemplatesConnectionEdge {
 	cursor: String!
 	node: Template!
+}
+
+input RecoveryCodeValidateInput {
+	code: String!
+	twoFactorLinkingKey: String
+}
+
+type RecoveryCodes {
+	recoveryCodes: [String!]!
 }
 
 type ReferralInfo implements Node {
@@ -1281,6 +1359,28 @@ The ServiceVariables scalar type represents values as the TypeScript type: Recor
 """
 scalar ServiceVariables
 
+type Subscription {
+	"""
+	Stream logs for a build
+	"""
+	buildLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+
+	"""
+	Stream logs for a deployment
+	"""
+	deploymentLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+
+	"""
+	Stream logs for a plugin
+	"""
+	pluginLogs(
+		environmentId: String!
+		filter: String
+		limit: Int
+		pluginId: String!
+	): [Log!]!
+}
+
 input SupportRequestInput {
 	isPurchasing: Boolean
 	isTechnical: Boolean
@@ -1402,6 +1502,25 @@ input TemplateUpdateInput {
 	demoProjectId: String
 	metadata: TemplateMetadata!
 	services: [TemplateServiceUpdateInput!]!
+}
+
+type TwoFactorInfo {
+	hasRecoveryCodes: Boolean!
+	isVerified: Boolean!
+}
+
+input TwoFactorInfoCreateInput {
+	token: String!
+}
+
+type TwoFactorInfoSecret {
+	secret: String!
+	uri: String!
+}
+
+input TwoFactorInfoValidateInput {
+	token: String!
+	twoFactorLinkingKey: String
 }
 
 """
