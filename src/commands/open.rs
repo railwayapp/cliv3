@@ -5,6 +5,11 @@ use super::*;
 pub struct Args {}
 
 pub async fn command(args: Args) -> Result<()> {
-    unimplemented!("open command is not implemented yet");
+    let configs = Configs::new()?;
+    let linked_project = configs.get_linked_project()?;
+    ::open::that(format!(
+        "https://railway.app/project/{}",
+        linked_project.project
+    ))?;
     Ok(())
 }
