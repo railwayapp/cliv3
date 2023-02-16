@@ -9,6 +9,14 @@ query Projects($teamId: String) {
 					id
 					name
 				}
+				environments {
+					edges {
+						node {
+							id
+							name
+						}
+					}
+				}
 			}
 		}
 	}

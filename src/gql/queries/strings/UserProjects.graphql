@@ -11,6 +11,14 @@ query UserProjects {
 						id
 						name
 					}
+					environments {
+						edges {
+							node {
+								id
+								name
+							}
+						}
+					}
 				}
 			}
 		}

@@ -100,6 +100,17 @@ impl Configs {
         Ok(project)
     }
 
+    pub fn link_project(&mut self, project_id: String, environment_id: String) -> Result<()> {
+        let path = Self::get_current_working_directory()?;
+        let project = RailwayProject {
+            project_path: path.clone(),
+            project: project_id,
+            environment: environment_id,
+        };
+        self.root_config.projects.insert(path, project);
+        Ok(())
+    }
+
     pub fn unlink_project(&mut self) -> Result<RailwayProject> {
         let path = Self::get_current_working_directory()?;
         let project = self

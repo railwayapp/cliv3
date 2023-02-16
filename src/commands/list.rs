@@ -29,17 +29,9 @@ pub async fn command(args: Args) -> Result<()> {
         .iter()
         .map(|project| &project.node)
         .collect();
-    projects.sort_by(|a, b| a.updated_at.cmp(&b.updated_at));
+    projects.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
 
     let teams: Vec<_> = body.me.teams.edges.iter().map(|team| &team.node).collect();
-
-    // for project in &projects {
-    //     if let Some(team) = &project.team {
-    //         teams.insert(team.name.clone());
-    //     } else {
-    //         teams.insert("Personal".to_string());
-    //     }
-    // }
 
     println!("{}", "Personal".bold());
     for project in &projects {
