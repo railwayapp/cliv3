@@ -26,10 +26,8 @@ pub struct Args {
 commands_enum!(
     add,
     completion,
-    connect,
     delete,
     docs,
-    down,
     environment,
     init,
     link,
@@ -38,7 +36,6 @@ commands_enum!(
     logout,
     logs,
     open,
-    protect,
     run,
     shell,
     status,
