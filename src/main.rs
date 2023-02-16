@@ -45,7 +45,6 @@ commands_enum!(
     unlink,
     up,
     variables,
-    version,
     whoami
 );
 
