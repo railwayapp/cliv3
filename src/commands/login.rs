@@ -1,4 +1,6 @@
-use std::{convert::Infallible, net::SocketAddr};
+use std::{net::SocketAddr, time::Duration};
+
+use crate::consts::TICK_STRING;
 
 use super::*;
 use http_body_util::Full;
@@ -85,6 +87,14 @@ pub async fn command(args: Args) -> Result<()> {
     };
 
     ::open::that(generate_cli_login_url(port)?)?;
+    let spinner = indicatif::ProgressBar::new_spinner()
+        .with_style(
+            indicatif::ProgressStyle::default_spinner()
+                .tick_chars(TICK_STRING)
+                .template("{spinner:.green} {msg}")?,
+        )
+        .with_message("Waiting for login...");
+    spinner.enable_steady_tick(Duration::from_millis(100));
 
     let (stream, _) = listener.accept().await?;
 
@@ -111,6 +121,7 @@ pub async fn command(args: Args) -> Result<()> {
     .await?;
     let me = res.data.context("No data")?.me;
 
+    spinner.finish_and_clear();
     println!(
         "Logged in as {} ({})",
         me.name.context("No name")?.bold(),
