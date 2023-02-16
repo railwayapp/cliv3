@@ -9,7 +9,7 @@ pub struct Args {}
 pub async fn command(args: Args) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().ok();
 
     let vars = queries::user_projects::Variables {};
 
@@ -35,11 +35,12 @@ pub async fn command(args: Args) -> Result<()> {
 
     println!("{}", "Personal".bold());
     for project in &projects {
-        let project_name = if project.id == linked_project.project {
-            project.name.purple().bold()
-        } else {
-            project.name.white()
-        };
+        let project_name =
+            if linked_project.is_some() && project.id == linked_project.unwrap().project {
+                project.name.purple().bold()
+            } else {
+                project.name.white()
+            };
         println!("  {}", project_name);
     }
 
@@ -68,11 +69,12 @@ pub async fn command(args: Args) -> Result<()> {
             projects.sort_by(|a, b| a.updated_at.cmp(&b.updated_at));
 
             for project in &projects {
-                let project_name = if project.id == linked_project.project {
-                    project.name.purple().bold()
-                } else {
-                    project.name.white()
-                };
+                let project_name =
+                    if linked_project.is_some() && project.id == linked_project.unwrap().project {
+                        project.name.purple().bold()
+                    } else {
+                        project.name.white()
+                    };
                 println!("  {}", project_name);
             }
         }
