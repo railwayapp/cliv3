@@ -40,3 +40,11 @@ pub struct ProjectPlugins;
     response_derives = "Debug"
 )]
 pub struct TwoFactorInfo;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/UserProjects.graphql",
+    response_derives = "Debug"
+)]
+pub struct UserProjects;

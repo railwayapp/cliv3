@@ -1,5 +1,5 @@
-query Projects {
-	projects {
+query Projects($teamId: String) {
+	projects(teamId: $teamId) {
 		edges {
 			node {
 				id

@@ -1,0 +1,26 @@
+query UserProjects {
+	me {
+		projects {
+			edges {
+				node {
+					id
+					name
+					createdAt
+					updatedAt
+					team {
+						id
+						name
+					}
+				}
+			}
+		}
+		teams {
+			edges {
+				node {
+					id
+					name
+				}
+			}
+		}
+	}
+}
