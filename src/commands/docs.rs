@@ -1,3 +1,5 @@
+use anyhow::bail;
+
 use super::*;
 
 /// Open Railway Documentation in default browser
@@ -5,11 +7,16 @@ use super::*;
 pub struct Args {}
 
 pub async fn command(args: Args) -> Result<()> {
-    println!("🚝 Press Enter to open the browser (^C to quit)");
-    let mut temp = String::new();
-    std::io::stdin().read_line(&mut temp)?;
-    match ::open::that("https://docs.railway.app/") {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e.into()),
+    let config = Configs::new()?;
+    let confirm = inquire::Confirm::new("Open the browser")
+        .with_default(true)
+        .with_render_config(config.get_render_config())
+        .prompt()?;
+
+    if !confirm {
+        bail!("Aborted by user");
     }
+
+    ::open::that("https://docs.railway.app/")?;
+    Ok(())
 }

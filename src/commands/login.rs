@@ -3,6 +3,7 @@ use std::{net::SocketAddr, time::Duration};
 use crate::consts::TICK_STRING;
 
 use super::*;
+use anyhow::bail;
 use http_body_util::Full;
 use hyper::{body::Bytes, server::conn::http1, service::service_fn, Request, Response};
 use rand::Rng;
@@ -17,13 +18,13 @@ pub async fn command(args: Args) -> Result<()> {
     let mut config = Configs::new()?;
     let render_config = config.get_render_config();
 
-    let ans = inquire::Confirm::new("Open the browser")
+    let confirm = inquire::Confirm::new("Open the browser")
         .with_default(true)
         .with_render_config(render_config)
         .prompt()?;
 
-    if !ans {
-        return Ok(());
+    if !confirm {
+        bail!("Aborted by user");
     }
 
     let port = rand::thread_rng().gen_range(50000..60000);

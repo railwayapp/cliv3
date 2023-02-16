@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::bail;
 
-use crate::consts::{PLUGINS, TICK_STRING};
+use crate::consts::TICK_STRING;
 
 use super::{queries::project_plugins::PluginType, *};
 

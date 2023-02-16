@@ -47,7 +47,7 @@ impl Configs {
             let mut serialized_config = vec![];
             file.read_to_end(&mut serialized_config)?;
 
-            let mut root_config: RailwayConfig = serde_json::from_slice(&serialized_config)?;
+            let root_config: RailwayConfig = serde_json::from_slice(&serialized_config)?;
 
             let config = Self {
                 root_config,

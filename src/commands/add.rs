@@ -1,7 +1,5 @@
 use std::time::Duration;
 
-use serde::Serialize;
-
 use crate::consts::{PLUGINS, TICK_STRING};
 
 use super::{queries::project_plugins::PluginType, *};
@@ -61,7 +59,7 @@ pub async fn command(args: Args) -> Result<()> {
             .with_message(format!("Creating {plugin}..."));
         spinner.enable_steady_tick(Duration::from_millis(100));
 
-        let res = post_graphql::<mutations::PluginCreate, _>(
+        post_graphql::<mutations::PluginCreate, _>(
             &client,
             "https://backboard.railway.app/graphql/v2",
             vars,

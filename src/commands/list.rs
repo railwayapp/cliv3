@@ -1,6 +1,4 @@
-use std::collections::{BTreeSet, HashSet};
-
-use super::{queries::project, *};
+use super::*;
 
 /// List all projects in your Railway account
 #[derive(Parser)]
