@@ -269,6 +269,24 @@ type ExecutionTime {
 	totalTimeMinutes: Float!
 }
 
+type GitHubBranch {
+	name: String!
+}
+
+type GitHubEvent {
+	createdAt: DateTime
+	type: String!
+}
+
+type GitHubRepo {
+	defaultBranch: String!
+	fullName: String!
+	id: Int!
+	installationId: String!
+	isPrivate: Boolean!
+	name: String!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -972,6 +990,31 @@ type Query {
 		teamId: String
 		userId: String
 	): [ExecutionTime!]!
+
+	"""
+	Get GitHub events for a user
+	"""
+	githubEvents(userId: String!): [GitHubEvent!]!
+
+	"""
+	Check if a repo name is available
+	"""
+	githubIsRepoNameAvailable(fullRepoName: String!): Boolean!
+
+	"""
+	Get branches for a GitHub repo that the authenticated user has access to
+	"""
+	githubRepoBranches(owner: String!, repo: String!): [GitHubBranch!]!
+
+	"""
+	Get a list of repos for a user that Railway has access to
+	"""
+	githubRepos: [GitHubRepo!]!
+
+	"""
+	Get a list of scopes the user has installed the installation to
+	"""
+	githubWritableScopes: [String!]!
 	me: User!
 
 	"""

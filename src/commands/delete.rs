@@ -6,7 +6,7 @@ use crate::consts::{ABORTED_BY_USER, TICK_STRING};
 
 use super::{queries::project_plugins::PluginType, *};
 
-/// Delete Project, may specify projectId as an argument
+/// Delete plugins from a project
 #[derive(Parser)]
 pub struct Args {}
 

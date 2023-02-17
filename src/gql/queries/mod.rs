@@ -58,3 +58,19 @@ pub struct UserProjects;
     response_derives = "Debug, Serialize, Clone"
 )]
 pub struct Variables;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/Deployments.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct Deployments;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/BuildLogs.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct BuildLogs;

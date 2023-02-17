@@ -23,3 +23,11 @@ pub struct PluginDelete;
     response_derives = "Debug, Serialize, Clone"
 )]
 pub struct ValidateTwoFactor;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/ProjectCreate.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct ProjectCreate;

@@ -4,13 +4,19 @@ use std::{
     time::Duration,
 };
 
+// use futures::StreamExt;
+// use graphql_client::GraphQLQuery;
 use gzp::{deflate::Gzip, ZBuilder};
 use ignore::WalkBuilder;
-use indicatif::{ProgressBar, ProgressIterator, ProgressStyle};
+use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
 use synchronized_writer::SynchronizedWriter;
 use tar::Builder;
 
-use crate::{consts::TICK_STRING, entities::UpResponse};
+use crate::{
+    consts::TICK_STRING,
+    entities::UpResponse,
+    // subscription::connect_subscription_client
+};
 
 use super::*;
 
@@ -29,22 +35,9 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;
 
-    let vars = queries::project::Variables {
-        id: linked_project.project.to_owned(),
-    };
-
-    let res = post_graphql::<queries::Project, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
-
-    let body = res.data.context("Failed to retrieve response body")?;
-
-    let spinner = indicatif::ProgressBar::new_spinner()
+    let spinner = ProgressBar::new_spinner()
         .with_style(
-            indicatif::ProgressStyle::default_spinner()
+            ProgressStyle::default_spinner()
                 .tick_chars(TICK_STRING)
                 .template("{spinner:.green} {msg:.cyan.bold}")?,
         )
@@ -70,7 +63,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                     .tick_chars(TICK_STRING),
             )
             .with_message("Compressing")
-            .with_finish(indicatif::ProgressFinish::WithMessage("Compressed".into()));
+            .with_finish(ProgressFinish::WithMessage("Compressed".into()));
         pg.enable_steady_tick(Duration::from_millis(100));
 
         for entry in walked.into_iter().progress_with(pg) {
@@ -78,16 +71,15 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         }
     }
     parz.finish()?;
-    let client = GQLClient::new_authorized(&configs)?;
 
     let builder = client.post(format!(
         "https://backboard.railway.app/project/{}/environment/{}/up",
         linked_project.project, linked_project.environment
     ));
 
-    let spinner = indicatif::ProgressBar::new_spinner()
+    let spinner = ProgressBar::new_spinner()
         .with_style(
-            indicatif::ProgressStyle::default_spinner()
+            ProgressStyle::default_spinner()
                 .tick_chars(TICK_STRING)
                 .template("{spinner:.green} {msg:.cyan.bold}")?,
         )
@@ -107,5 +99,73 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
     if args.detach {
         return Ok(());
     }
+
+    // let subscription_client = connect_subscription_client(
+    //     &configs,
+    //     url::Url::from_str("wss://backboard.railway.app/graphql/v2")?,
+    // )
+    // .await?;
+
+    let vars = queries::deployments::Variables {
+        project_id: linked_project.project.clone(),
+    };
+
+    let res = post_graphql::<queries::Deployments, _>(
+        &client,
+        "https://backboard.railway.app/graphql/v2",
+        vars,
+    )
+    .await?;
+
+    let body = res.data.context("Failed to retrieve response body")?;
+
+    let mut deployments: Vec<_> = body
+        .project
+        .deployments
+        .edges
+        .into_iter()
+        .map(|deployment| deployment.node)
+        .collect();
+    deployments.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    let latest_deployment = deployments.first().context("No deployments found")?;
+
+    // loop {
+    //     let vars = queries::build_logs::Variables {
+    //         deployment_id: latest_deployment.id.clone(),
+    //         start_date: Some(chrono::Utc::now()),
+    //     };
+    //     let res = post_graphql::<queries::BuildLogs, _>(
+    //         &client,
+    //         "https://backboard.railway.app/graphql/v2",
+    //         vars,
+    //     );
+
+    //     let body = res
+    //         .await?
+    //         .data
+    //         .context("Failed to retrieve response body")?;
+
+    //     for line in body.build_logs {
+    //         println!("{}", line.message);
+    //     }
+
+    //     tokio::time::sleep(Duration::from_secs(1)).await;
+    // }
+    // {
+    //     let vars = subscriptions::build_logs::Variables {
+    //         deployment_id: latest_deployment.id.clone(),
+    //     };
+    //     let query = subscriptions::BuildLogs::build_query(vars);
+    //     let mut subscription = subscription_client.start::<subscriptions::BuildLogs>(&query);
+    //     while let log = subscription.next().await {
+    //         dbg!(&log);
+    //         // if let Some(log) = log {
+    //         //     let log = log.data.context("Failed to retrieve log")?;
+    //         //     for line in log.build_logs {
+    //         //         println!("{}", line.message);
+    //         //     }
+    //         // }
+    //     }
+    // }
     Ok(())
 }

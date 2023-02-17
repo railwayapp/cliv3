@@ -1,0 +1,6 @@
+subscription BuildLogs($deploymentId: String!) {
+	buildLogs(deploymentId: $deploymentId) {
+		message
+		timestamp
+	}
+}
