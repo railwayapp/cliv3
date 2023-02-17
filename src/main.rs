@@ -7,6 +7,7 @@ use commands::*;
 mod client;
 mod config;
 mod consts;
+mod entities;
 mod gql;
 mod table;
 
