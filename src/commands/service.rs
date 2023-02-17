@@ -4,7 +4,7 @@ use anyhow::bail;
 
 use super::{queries::project::ProjectProjectServicesEdgesNode, *};
 
-/// Change the active environment
+/// Link a service to the current project
 #[derive(Parser)]
 pub struct Args {}
 
