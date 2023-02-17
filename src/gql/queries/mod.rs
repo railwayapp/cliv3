@@ -1,11 +1,13 @@
 use graphql_client::GraphQLQuery;
+
 type DateTime = chrono::DateTime<chrono::Utc>;
+type ServiceVariables = std::collections::BTreeMap<String, String>;
 
 #[derive(GraphQLQuery)]
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/Project.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct Project;
 
@@ -13,7 +15,7 @@ pub struct Project;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/Projects.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct Projects;
 
@@ -21,7 +23,7 @@ pub struct Projects;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/UserMeta.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct UserMeta;
 
@@ -29,7 +31,7 @@ pub struct UserMeta;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/ProjectPlugins.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct ProjectPlugins;
 
@@ -37,7 +39,7 @@ pub struct ProjectPlugins;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/TwoFactorInfo.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct TwoFactorInfo;
 
@@ -45,6 +47,14 @@ pub struct TwoFactorInfo;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/queries/strings/UserProjects.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct UserProjects;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/queries/strings/Variables.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct Variables;

@@ -12,7 +12,7 @@ macro_rules! commands_enum {
             async fn exec(cli: Args) -> Result<()> {
               match cli.command {
                 $(
-                  Commands::[<$module:camel>](args) => $module::command(args).await?,
+                  Commands::[<$module:camel>](args) => $module::command(args, cli.json).await?,
                 )*
               }
               Ok(())

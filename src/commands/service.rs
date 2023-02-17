@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-use super::{queries::project::ProjectProjectEnvironmentsEdgesNode, *};
+use anyhow::bail;
+
+use super::{queries::project::ProjectProjectServicesEdgesNode, *};
 
 /// Change the active environment
 #[derive(Parser)]
@@ -24,27 +26,31 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    let environments: Vec<_> = body
+    let services: Vec<_> = body
         .project
-        .environments
+        .services
         .edges
         .iter()
-        .map(|env| Environment(&env.node))
+        .map(|env| Service(&env.node))
         .collect();
 
-    let environment = inquire::Select::new("Select an environment", environments)
+    if services.is_empty() {
+        bail!("No services found");
+    }
+
+    let service = inquire::Select::new("Select a service", services)
         .with_render_config(configs.get_render_config())
         .prompt()?;
 
-    configs.link_project(linked_project.project.clone(), environment.0.id.clone())?;
+    configs.link_service(service.0.id.clone())?;
     configs.write()?;
     Ok(())
 }
 
 #[derive(Debug, Clone)]
-struct Environment<'a>(&'a ProjectProjectEnvironmentsEdgesNode);
+struct Service<'a>(&'a ProjectProjectServicesEdgesNode);
 
-impl<'a> Display for Environment<'a> {
+impl<'a> Display for Service<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0.name)
     }

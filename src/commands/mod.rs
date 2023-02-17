@@ -16,6 +16,7 @@ pub mod logout;
 pub mod logs;
 pub mod open;
 pub mod run;
+pub mod service;
 pub mod shell;
 pub mod status;
 pub mod unlink;

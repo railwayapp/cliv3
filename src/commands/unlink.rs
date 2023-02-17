@@ -1,12 +1,18 @@
 use anyhow::bail;
 
+use crate::consts::ABORTED_BY_USER;
+
 use super::*;
 
 /// Disassociate project from current directory
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    /// Unlink a service
+    #[clap(short, long)]
+    service: bool,
+}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;
@@ -23,14 +29,50 @@ pub async fn command(args: Args) -> Result<()> {
     .await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
+    let linked_service = body
+        .project
+        .services
+        .edges
+        .iter()
+        .find(|service| Some(service.node.id.clone()) == linked_project.service);
 
-    println!("Linked to {}", body.project.name.bold());
+    if args.service {
+        let Some(service) = linked_service else {
+            bail!("No linked service");
+        };
+        println!(
+            "Linked to {} on {}",
+            service.node.name.bold(),
+            body.project.name.bold()
+        );
+        let confirmed = inquire::Confirm::new("Are you sure you want to unlink this service?")
+            .with_render_config(configs.get_render_config())
+            .with_default(true)
+            .prompt()?;
+        if !confirmed {
+            bail!(ABORTED_BY_USER);
+        }
+        configs.unlink_service()?;
+        configs.write()?;
+        return Ok(());
+    }
+
+    if let Some(service) = linked_service {
+        println!(
+            "Linked to {} on {}",
+            service.node.name.bold(),
+            body.project.name.bold()
+        );
+    } else {
+        println!("Linked to {}", body.project.name.bold());
+    }
+
     let confirmed = inquire::Confirm::new("Are you sure you want to unlink this project?")
         .with_render_config(configs.get_render_config())
         .with_default(true)
         .prompt()?;
     if !confirmed {
-        bail!("Aborted by user");
+        bail!(ABORTED_BY_USER);
     }
     configs.unlink_project()?;
     configs.write()?;

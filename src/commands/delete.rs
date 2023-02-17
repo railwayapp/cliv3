@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::bail;
 
-use crate::consts::TICK_STRING;
+use crate::consts::{ABORTED_BY_USER, TICK_STRING};
 
 use super::{queries::project_plugins::PluginType, *};
 
@@ -10,7 +10,7 @@ use super::{queries::project_plugins::PluginType, *};
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let render_config = configs.get_render_config();
 
@@ -94,7 +94,7 @@ pub async fn command(args: Args) -> Result<()> {
                 .prompt()?;
 
         if !confirmed {
-            bail!("Aborted by user")
+            bail!(ABORTED_BY_USER)
         }
 
         let spinner = indicatif::ProgressBar::new_spinner()

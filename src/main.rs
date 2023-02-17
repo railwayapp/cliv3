@@ -8,6 +8,7 @@ mod client;
 mod config;
 mod consts;
 mod gql;
+mod table;
 
 #[macro_use]
 mod macros;
@@ -19,6 +20,10 @@ mod macros;
 pub struct Args {
     #[clap(subcommand)]
     command: Commands,
+
+    /// Output in JSON format
+    #[clap(global = true, long)]
+    json: bool,
 }
 
 // Generates the commands based on the modules in the commands directory
@@ -37,6 +42,7 @@ commands_enum!(
     logs,
     open,
     run,
+    service,
     shell,
     status,
     unlink,

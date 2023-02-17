@@ -1,6 +1,6 @@
 use std::{net::SocketAddr, time::Duration};
 
-use crate::consts::TICK_STRING;
+use crate::consts::{ABORTED_BY_USER, TICK_STRING};
 
 use super::*;
 use anyhow::bail;
@@ -14,7 +14,7 @@ use tokio::net::TcpListener;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     let mut config = Configs::new()?;
     let render_config = config.get_render_config();
 
@@ -24,7 +24,7 @@ pub async fn command(args: Args) -> Result<()> {
         .prompt()?;
 
     if !confirm {
-        bail!("Aborted by user");
+        bail!(ABORTED_BY_USER);
     }
 
     let port = rand::thread_rng().gen_range(50000..60000);

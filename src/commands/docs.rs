@@ -1,12 +1,14 @@
 use anyhow::bail;
 
+use crate::consts::ABORTED_BY_USER;
+
 use super::*;
 
 /// Open Railway Documentation in default browser
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     let config = Configs::new()?;
     let confirm = inquire::Confirm::new("Open the browser")
         .with_default(true)
@@ -14,7 +16,7 @@ pub async fn command(args: Args) -> Result<()> {
         .prompt()?;
 
     if !confirm {
-        bail!("Aborted by user");
+        bail!(ABORTED_BY_USER);
     }
 
     ::open::that("https://docs.railway.app/")?;

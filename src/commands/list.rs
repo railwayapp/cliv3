@@ -1,10 +1,20 @@
-use super::*;
+use std::collections::{BTreeMap, BTreeSet};
+
+use serde::Serialize;
+
+use super::{
+    queries::{
+        projects::ProjectsProjectsEdgesNode,
+        user_projects::{UserProjectsMeProjectsEdgesNode, UserProjectsMeTeamsEdgesNode},
+    },
+    *,
+};
 
 /// List all projects in your Railway account
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project().ok();
@@ -20,31 +30,39 @@ pub async fn command(args: Args) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    let mut projects: Vec<_> = body
+    let mut my_projects: Vec<_> = body
         .me
         .projects
         .edges
         .iter()
         .map(|project| &project.node)
         .collect();
-    projects.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    my_projects.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+
+    let mut all_projects: Vec<_> = my_projects
+        .iter()
+        .map(|project| Project::Me((*project).clone()))
+        .collect();
 
     let teams: Vec<_> = body.me.teams.edges.iter().map(|team| &team.node).collect();
-
-    println!("{}", "Personal".bold());
-    for project in &projects {
-        let project_name =
-            if linked_project.is_some() && project.id == linked_project.unwrap().project {
-                project.name.purple().bold()
-            } else {
-                project.name.white()
-            };
-        println!("  {}", project_name);
+    if !json {
+        println!("{}", "Personal".bold());
+        for project in &my_projects {
+            let project_name =
+                if linked_project.is_some() && project.id == linked_project.unwrap().project {
+                    project.name.purple().bold()
+                } else {
+                    project.name.white()
+                };
+            println!("  {}", project_name);
+        }
     }
 
     for team in teams {
-        println!();
-        println!("{}", team.name.bold());
+        if !json {
+            println!();
+            println!("{}", team.name.bold());
+        }
         {
             let vars = queries::projects::Variables {
                 team_id: Some(team.id.clone()),
@@ -65,18 +83,34 @@ pub async fn command(args: Args) -> Result<()> {
                 .map(|project| &project.node)
                 .collect();
             projects.sort_by(|a, b| a.updated_at.cmp(&b.updated_at));
-
-            for project in &projects {
-                let project_name =
-                    if linked_project.is_some() && project.id == linked_project.unwrap().project {
+            let mut team_projects: Vec<_> = projects
+                .iter()
+                .map(|project| Project::Team((*project).clone()))
+                .collect();
+            all_projects.append(&mut team_projects);
+            if !json {
+                for project in &projects {
+                    let project_name = if linked_project.is_some()
+                        && project.id == linked_project.unwrap().project
+                    {
                         project.name.purple().bold()
                     } else {
                         project.name.white()
                     };
-                println!("  {}", project_name);
+                    println!("  {}", project_name);
+                }
             }
         }
     }
-
+    if json {
+        println!("{}", serde_json::to_string_pretty(&all_projects)?);
+    }
     Ok(())
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+enum Project {
+    Me(UserProjectsMeProjectsEdgesNode),
+    Team(ProjectsProjectsEdgesNode),
 }

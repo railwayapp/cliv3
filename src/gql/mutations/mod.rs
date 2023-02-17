@@ -4,7 +4,7 @@ use graphql_client::GraphQLQuery;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/mutations/strings/PluginCreate.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct PluginCreate;
 
@@ -12,7 +12,7 @@ pub struct PluginCreate;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/mutations/strings/PluginDelete.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct PluginDelete;
 
@@ -20,6 +20,6 @@ pub struct PluginDelete;
 #[graphql(
     schema_path = "src/gql/schema.graphql",
     query_path = "src/gql/mutations/strings/ValidateTwoFactor.graphql",
-    response_derives = "Debug"
+    response_derives = "Debug, Serialize, Clone"
 )]
 pub struct ValidateTwoFactor;

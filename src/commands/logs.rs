@@ -4,7 +4,7 @@ use super::*;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args) -> Result<()> {
+pub async fn command(args: Args, json: bool) -> Result<()> {
     unimplemented!("logs command is not implemented yet");
     Ok(())
 }

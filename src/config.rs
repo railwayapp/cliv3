@@ -9,12 +9,15 @@ use anyhow::{Context, Result};
 use inquire::ui::{Attributes, RenderConfig, StyleSheet, Styled};
 use serde::{Deserialize, Serialize};
 
+use crate::commands::link;
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RailwayProject {
     pub project_path: String,
     pub project: String,
     pub environment: String,
+    pub service: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -106,8 +109,15 @@ impl Configs {
             project_path: path.clone(),
             project: project_id,
             environment: environment_id,
+            service: None,
         };
         self.root_config.projects.insert(path, project);
+        Ok(())
+    }
+
+    pub fn link_service(&mut self, service_id: String) -> Result<()> {
+        let linked_project = self.get_linked_project_mut()?;
+        linked_project.service = Some(service_id);
         Ok(())
     }
 
@@ -119,6 +129,12 @@ impl Configs {
             .remove(&path)
             .context("Project not found! Run `railway link` to link to a project")?;
         Ok(project)
+    }
+
+    pub fn unlink_service(&mut self) -> Result<()> {
+        let linked_project = self.get_linked_project_mut()?;
+        linked_project.service = None;
+        Ok(())
     }
 
     pub fn get_render_config(&self) -> RenderConfig {
