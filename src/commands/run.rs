@@ -67,7 +67,33 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
 
         all_variables.append(&mut body.variables);
     }
-    if linked_project.service.is_some() {
+    if let Some(service) = args.service {
+        let service_id = body
+            .project
+            .services
+            .edges
+            .iter()
+            .find(|s| s.node.name == service || s.node.id == service)
+            .context("Service not found")?;
+
+        let vars = queries::variables::Variables {
+            environment_id: linked_project.environment.clone(),
+            project_id: linked_project.project.clone(),
+            service_id: Some(service_id.node.id.clone()),
+            plugin_id: None,
+        };
+
+        let res = post_graphql::<queries::Variables, _>(
+            &client,
+            "https://backboard.railway.app/graphql/v2",
+            vars,
+        )
+        .await?;
+
+        let mut body = res.data.context("Failed to retrieve response body")?;
+
+        all_variables.append(&mut body.variables);
+    } else if linked_project.service.is_some() {
         let vars = queries::variables::Variables {
             environment_id: linked_project.environment.clone(),
             project_id: linked_project.project.clone(),
