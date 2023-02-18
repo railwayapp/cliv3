@@ -10,7 +10,9 @@ homepage = "https://github.com/railwayapp/cliv3"
 repository = "https://github.com/railwayapp/cliv3"
 rust-version = "1.67.1"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "railway"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.69"
