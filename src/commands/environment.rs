@@ -6,7 +6,7 @@ use super::{queries::project::ProjectProjectEnvironmentsEdgesNode, *};
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;

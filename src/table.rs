@@ -1,7 +1,7 @@
 use anyhow::Result;
 use colored::Colorize;
 use indoc::formatdoc;
-use std::{collections::BTreeMap, fmt::Write};
+use std::collections::BTreeMap;
 
 const FIRST_COLUMN_MIN_WIDTH: usize = 10;
 const MIN_BOX_WIDTH: usize = 20;
@@ -35,8 +35,8 @@ impl Table {
         let first_column_width = std::cmp::max(
             FIRST_COLUMN_MIN_WIDTH,
             self.rows
-                .iter()
-                .map(|(name, _)| console::measure_text_width(name))
+                .keys()
+                .map(|name| console::measure_text_width(name))
                 .max()
                 .unwrap_or(0),
         );

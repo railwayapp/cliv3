@@ -14,7 +14,7 @@ use tokio::net::TcpListener;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut config = Configs::new()?;
     let render_config = config.get_render_config();
 
@@ -37,12 +37,12 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         let tx = tx.clone();
         async move {
             if req.method() == hyper::Method::GET {
-                let mut pairs = req.uri().query().context("No query")?.split("&");
+                let mut pairs = req.uri().query().context("No query")?.split('&');
 
                 let token = pairs
                     .next()
                     .context("No token")?
-                    .split("=")
+                    .split('=')
                     .nth(1)
                     .context("No token")?
                     .to_owned();
@@ -140,10 +140,10 @@ struct LoginResponse {
 
 fn get_random_numeric_code(length: usize) -> String {
     let mut rng = rand::thread_rng();
-    let code = std::iter::from_fn(|| rng.gen_range(0..10).to_string().chars().next())
+
+    std::iter::from_fn(|| rng.gen_range(0..10).to_string().chars().next())
         .take(length)
-        .collect();
-    code
+        .collect()
 }
 
 fn generate_login_payload(port: u16) -> Result<String> {
@@ -165,6 +165,6 @@ fn generate_cli_login_url(port: u16) -> Result<String> {
     let engine = GeneralPurpose::new(&URL_SAFE, GeneralPurposeConfig::new());
     let encoded_payload = engine.encode(payload.as_bytes());
 
-    let url = format!("https://railway.app/cli-login?d={}", encoded_payload);
+    let url = format!("https://railway.app/cli-login?d={encoded_payload}");
     Ok(url)
 }

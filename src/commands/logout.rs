@@ -4,7 +4,6 @@ use super::*;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     unimplemented!("logout command is not implemented yet");
-    Ok(())
 }

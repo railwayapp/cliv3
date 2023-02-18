@@ -1,11 +1,8 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use serde::Serialize;
 
 use super::{
     queries::{
-        projects::ProjectsProjectsEdgesNode,
-        user_projects::{UserProjectsMeProjectsEdgesNode, UserProjectsMeTeamsEdgesNode},
+        projects::ProjectsProjectsEdgesNode, user_projects::UserProjectsMeProjectsEdgesNode,
     },
     *,
 };
@@ -14,7 +11,7 @@ use super::{
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project().ok();
@@ -54,7 +51,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                 } else {
                     project.name.white()
                 };
-            println!("  {}", project_name);
+            println!("  {project_name}");
         }
     }
 
@@ -97,7 +94,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                     } else {
                         project.name.white()
                     };
-                    println!("  {}", project_name);
+                    println!("  {project_name}");
                 }
             }
         }
