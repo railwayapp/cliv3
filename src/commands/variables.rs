@@ -114,7 +114,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
     Ok(())
 }
 
-fn prompt_plugin<'a>(plugins: Vec<Plugin<'a>>) -> Result<Plugin<'a>> {
+fn prompt_plugin(plugins: Vec<Plugin>) -> Result<Plugin> {
     let configs = Configs::new()?;
     let plugin = inquire::Select::new("Select a plugin", plugins)
         .with_render_config(configs.get_render_config())

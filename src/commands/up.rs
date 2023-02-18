@@ -30,7 +30,7 @@ pub struct Args {
     detach: bool,
 }
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;
@@ -41,7 +41,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                 .tick_chars(TICK_STRING)
                 .template("{spinner:.green} {msg:.cyan.bold}")?,
         )
-        .with_message(format!("Indexing"));
+        .with_message("Indexing".to_string());
     spinner.enable_steady_tick(Duration::from_millis(100));
     let bytes = Vec::<u8>::new();
     let arc = Arc::new(Mutex::new(bytes));
@@ -128,7 +128,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         .map(|deployment| deployment.node)
         .collect();
     deployments.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-    let latest_deployment = deployments.first().context("No deployments found")?;
+    let _latest_deployment = deployments.first().context("No deployments found")?;
 
     // loop {
     //     let vars = queries::build_logs::Variables {

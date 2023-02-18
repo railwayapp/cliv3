@@ -4,7 +4,7 @@ use super::*;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let vars = queries::user_meta::Variables {};

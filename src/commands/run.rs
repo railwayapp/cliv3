@@ -17,7 +17,7 @@ pub struct Args {
     args: Vec<String>,
 }
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;

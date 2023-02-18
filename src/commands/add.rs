@@ -8,7 +8,7 @@ use super::{queries::project_plugins::PluginType, *};
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let render_config = configs.get_render_config();
 
@@ -37,7 +37,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         .collect();
 
     let filtered_plugins: Vec<_> = PLUGINS
-        .into_iter()
+        .iter()
         .filter(|plugin| !project_plugins.contains(&plugin.to_string()))
         .collect();
 

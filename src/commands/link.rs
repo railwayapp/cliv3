@@ -16,7 +16,7 @@ use super::{
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
 
@@ -102,7 +102,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
     Ok(())
 }
 
-fn prompt_team_projects<'a>(project_names: Vec<Project>) -> Result<(Project, Environment)> {
+fn prompt_team_projects(project_names: Vec<Project>) -> Result<(Project, Environment)> {
     let configs = Configs::new()?;
 
     let project = inquire::Select::new("Select a project", project_names)
@@ -118,9 +118,10 @@ fn prompt_team_projects<'a>(project_names: Vec<Project>) -> Result<(Project, Env
     let environment = inquire::Select::new("Select an environment", environments)
         .with_render_config(configs.get_render_config())
         .prompt()?;
-    return Ok((project, environment));
+    Ok((project, environment))
 }
-fn prompt_personal_projects<'a>(
+
+fn prompt_personal_projects(
     personal_project_names: Vec<PersonalProject>,
 ) -> Result<(PersonalProject, PersonalEnvironment)> {
     let configs = Configs::new()?;
@@ -138,7 +139,7 @@ fn prompt_personal_projects<'a>(
     let environment = inquire::Select::new("Select an environment", environments)
         .with_render_config(configs.get_render_config())
         .prompt()?;
-    return Ok((project, environment));
+    Ok((project, environment))
 }
 
 #[derive(Debug, Clone)]

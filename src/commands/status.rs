@@ -4,7 +4,7 @@ use super::*;
 #[derive(Parser)]
 pub struct Args {}
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(_args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;
@@ -37,14 +37,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                 .bold()
         );
         println!("Plugins:");
-        for plugin in body
-            .project
-            .plugins
-            .edges
-            .iter()
-            .map(|plugin| &plugin.node)
-            .into_iter()
-        {
+        for plugin in body.project.plugins.edges.iter().map(|plugin| &plugin.node) {
             println!("{}", format!("{:?}", plugin.name).dimmed().bold());
         }
 
@@ -55,7 +48,6 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
             .edges
             .iter()
             .map(|service| &service.node)
-            .into_iter()
         {
             println!("{}", service.name.dimmed().bold());
         }

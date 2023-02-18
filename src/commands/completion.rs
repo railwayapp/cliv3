@@ -10,7 +10,7 @@ pub struct Args {
     shell: Shell,
 }
 
-pub async fn command(args: Args, json: bool) -> Result<()> {
+pub async fn command(args: Args, _json: bool) -> Result<()> {
     generate(
         args.shell,
         &mut crate::Args::command(),

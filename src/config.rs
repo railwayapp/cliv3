@@ -9,8 +9,6 @@ use anyhow::{Context, Result};
 use inquire::ui::{Attributes, RenderConfig, StyleSheet, Styled};
 use serde::{Deserialize, Serialize};
 
-use crate::commands::link;
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RailwayProject {
@@ -162,7 +160,7 @@ impl Configs {
         create_dir_all(self.root_config_path.parent().unwrap())?;
         let mut file = File::create(&self.root_config_path)?;
         let serialized_config = serde_json::to_vec_pretty(&self.root_config)?;
-        file.write_all(&mut serialized_config.as_slice())?;
+        file.write_all(serialized_config.as_slice())?;
         file.sync_all()?;
         Ok(())
     }
