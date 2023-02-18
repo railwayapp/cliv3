@@ -1275,8 +1275,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "railway"
-version = "3.0.0"
+name = "railwayapp"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "base64",
