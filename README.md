@@ -1,5 +1,7 @@
 # Railway CLI (v3)
 
+[![CI](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml/badge.svg)](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml)
+
 This is the command line interface for [Railway](https://railway.app). Use it to connect your code to Railway's infrastructure without needing to worry about environment variables or configuration.
 
 [View the docs](https://docs.railway.app/develop/cli)
