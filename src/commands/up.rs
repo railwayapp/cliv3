@@ -86,9 +86,10 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         .with_message("Uploading");
     spinner.enable_steady_tick(Duration::from_millis(100));
 
+    let body = arc.lock().unwrap().clone();
     let res = builder
         .header("Content-Type", "multipart/form-data")
-        .body(arc.lock().unwrap().clone())
+        .body(body)
         .send()
         .await?
         .error_for_status()?;
