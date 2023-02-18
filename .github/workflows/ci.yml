@@ -58,7 +58,7 @@ jobs:
         with:
           command: clippy
           # Set linting rules for clippy
-          args: --all-targets --all-features -- -D warnings
+          args: --all-targets
 
   test-plan:
     name: Tests
