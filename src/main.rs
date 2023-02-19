@@ -46,6 +46,7 @@ commands_enum!(
     run,
     service,
     shell,
+    starship,
     status,
     unlink,
     up,

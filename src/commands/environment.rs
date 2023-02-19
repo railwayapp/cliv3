@@ -36,7 +36,12 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         .with_render_config(configs.get_render_config())
         .prompt()?;
 
-    configs.link_project(linked_project.project.clone(), environment.0.id.clone())?;
+    configs.link_project(
+        linked_project.project.clone(),
+        linked_project.name.clone(),
+        environment.0.id.clone(),
+        Some(environment.0.name.clone()),
+    )?;
     configs.write()?;
     Ok(())
 }

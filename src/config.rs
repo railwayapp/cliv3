@@ -13,8 +13,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct RailwayProject {
     pub project_path: String,
+    pub name: Option<String>,
     pub project: String,
     pub environment: String,
+    pub environment_name: Option<String>,
     pub service: Option<String>,
 }
 
@@ -101,12 +103,20 @@ impl Configs {
         Ok(project)
     }
 
-    pub fn link_project(&mut self, project_id: String, environment_id: String) -> Result<()> {
+    pub fn link_project(
+        &mut self,
+        project_id: String,
+        name: Option<String>,
+        environment_id: String,
+        environment_name: Option<String>,
+    ) -> Result<()> {
         let path = Self::get_current_working_directory()?;
         let project = RailwayProject {
             project_path: path.clone(),
+            name,
             project: project_id,
             environment: environment_id,
+            environment_name,
             service: None,
         };
         self.root_config.projects.insert(path, project);

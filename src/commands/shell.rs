@@ -28,6 +28,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
     let mut all_variables = BTreeMap::<String, String>::new();
+    all_variables.insert("IN_RAILWAY_SHELL".to_owned(), "true".to_owned());
 
     let plugins: Vec<_> = body
         .project

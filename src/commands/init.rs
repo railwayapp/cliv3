@@ -85,16 +85,19 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         .await?;
 
         let body = res.data.context("Failed to retrieve response body")?;
+        let environment = body
+            .project_create
+            .environments
+            .edges
+            .first()
+            .context("No environments")?
+            .node
+            .clone();
         configs.link_project(
             body.project_create.id.clone(),
-            body.project_create
-                .environments
-                .edges
-                .first()
-                .context("No environments")?
-                .node
-                .id
-                .clone(),
+            Some(body.project_create.name.clone()),
+            environment.id,
+            Some(environment.name.clone()),
         )?;
         configs.write()?;
         println!(
@@ -132,16 +135,19 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     .await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
+    let environment = body
+        .project_create
+        .environments
+        .edges
+        .first()
+        .context("No environments")?
+        .node
+        .clone();
     configs.link_project(
         body.project_create.id.clone(),
-        body.project_create
-            .environments
-            .edges
-            .first()
-            .context("No environments")?
-            .node
-            .id
-            .clone(),
+        Some(body.project_create.name.clone()),
+        environment.id,
+        Some(environment.name.clone()),
     )?;
     configs.write()?;
     println!(

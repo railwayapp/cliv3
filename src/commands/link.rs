@@ -49,7 +49,12 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     if teams.is_empty() {
         let (project, environment) = prompt_personal_projects(personal_project_names)?;
-        configs.link_project(project.0.id.clone(), environment.0.id.clone())?;
+        configs.link_project(
+            project.0.id.clone(),
+            Some(project.0.name.clone()),
+            environment.0.id.clone(),
+            Some(environment.0.name.clone()),
+        )?;
         configs.write()?;
         return Ok(());
     }
@@ -66,7 +71,12 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     match team {
         Team::Personal => {
             let (project, environment) = prompt_personal_projects(personal_project_names)?;
-            configs.link_project(project.0.id.clone(), environment.0.id.clone())?;
+            configs.link_project(
+                project.0.id.clone(),
+                Some(project.0.name.clone()),
+                environment.0.id.clone(),
+                Some(environment.0.name.clone()),
+            )?;
         }
         Team::Team(team) => {
             let vars = queries::projects::Variables {
@@ -94,7 +104,12 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 .map(|project| Project(project))
                 .collect::<Vec<_>>();
             let (project, environment) = prompt_team_projects(project_names)?;
-            configs.link_project(project.0.id.clone(), environment.0.id.clone())?;
+            configs.link_project(
+                project.0.id.clone(),
+                Some(project.0.name.clone()),
+                environment.0.id.clone(),
+                Some(environment.0.name.clone()),
+            )?;
         }
     }
 
