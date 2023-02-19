@@ -50,6 +50,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     if teams.is_empty() {
         let (project, environment) = prompt_personal_projects(personal_project_names)?;
         configs.link_project(project.0.id.clone(), environment.0.id.clone())?;
+        configs.write()?;
         return Ok(());
     }
 
