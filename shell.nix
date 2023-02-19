@@ -4,14 +4,22 @@ let
       (import (fetchTarball "https://github.com/oxalica/rust-overlay/archive/d0dc81ffe8ea.tar.gz"))
     ];
   };
+  rust = with pkgs;
+    rust-bin.stable.latest.minimal;
+  basePkgs = with pkgs;
+    [
+      cmake
+      rust
+    ];
 
+  # macOS only
+  inputs = with pkgs;
+    basePkgs ++ lib.optionals stdenv.isDarwin
+      (with darwin.apple_sdk.frameworks; [
+        Security
+      ]);
 in
-pkgs.mkShell {
-  buildInputs = with pkgs; [
-    cmake
-    rust-bin.stable.latest.minimal
-
-    # For macOS
-    darwin.apple_sdk.frameworks.Security
-  ];
+pkgs.mkShell
+{
+  buildInputs = inputs;
 }
