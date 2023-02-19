@@ -12,9 +12,13 @@ use tokio::net::TcpListener;
 
 /// Login to your Railway account
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    /// Don't try to open a browser
+    #[clap(short, long)]
+    browserless: bool
+}
 
-pub async fn command(_args: Args, _json: bool) -> Result<()> {
+pub async fn command(args: Args, _json: bool) -> Result<()> {
     let mut config = Configs::new()?;
     let render_config = config.get_render_config();
 
@@ -87,7 +91,12 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         }
     };
 
-    ::open::that(generate_cli_login_url(port)?)?;
+    let url = generate_cli_login_url(port)?;
+    if args.browserless {
+        println!("Please open this URL in your browser to login: {}", url);
+    } else {
+        ::open::that(url)?;
+    }
     let spinner = indicatif::ProgressBar::new_spinner()
         .with_style(
             indicatif::ProgressStyle::default_spinner()
