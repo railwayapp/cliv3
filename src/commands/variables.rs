@@ -15,6 +15,10 @@ pub struct Args {
     /// Show variables for a plugin
     #[clap(short, long)]
     plugin: bool,
+
+    /// Show variables in KV format
+    #[clap(short, long)]
+    kv: bool,
 }
 
 pub async fn command(args: Args, json: bool) -> Result<()> {
@@ -100,6 +104,13 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
 
     if body.variables.is_empty() {
         println!("No variables found");
+        return Ok(());
+    }
+
+    if args.kv {
+        for (key, value) in body.variables {
+            println!("{}={}", key, value);
+        }
         return Ok(());
     }
 
