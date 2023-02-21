@@ -12,7 +12,7 @@ use super::{
 /// Show variables for active environment
 #[derive(Parser)]
 pub struct Args {
-    /// Show variables for a environment
+    /// Show variables for a specific environment
     environment: Option<String>,
     /// Show variables for a plugin
     #[clap(short, long)]
