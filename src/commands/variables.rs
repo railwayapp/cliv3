@@ -66,8 +66,6 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         linked_project.environment.clone()
     };
 
-    dbg!(&environment);
-
     let (vars, name) = if args.plugin {
         if plugins.is_empty() {
             bail!("No plugins found");
