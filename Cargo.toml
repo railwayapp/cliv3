@@ -11,6 +11,9 @@ repository = "https://github.com/railwayapp/cliv3"
 rust-version = "1.67.1"
 default-run = "railway"
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
 name = "railway"
 path = "src/main.rs"
