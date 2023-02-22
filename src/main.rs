@@ -1,58 +1,20 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
-mod commands;
-use commands::*;
-
-mod client;
-mod config;
-mod consts;
-mod entities;
-mod gql;
+pub mod client;
+pub(crate) mod config;
+pub(crate) mod consts;
+pub(crate) mod entities;
+pub mod gql;
 // mod subscription;
-mod table;
+pub(crate) mod table;
+mod commands;
 
 #[macro_use]
 mod macros;
 
-/// Interact with 🚅 Railway via CLI
-#[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
-#[clap(propagate_version = true)]
-pub struct Args {
-    #[clap(subcommand)]
-    command: Commands,
-
-    /// Output in JSON format
-    #[clap(global = true, long)]
-    json: bool,
-}
-
-// Generates the commands based on the modules in the commands directory
-// Specify the modules you want to include in the commands_enum! macro
-commands_enum!(
-    add,
-    completion,
-    delete,
-    docs,
-    environment,
-    init,
-    link,
-    list,
-    login,
-    logout,
-    logs,
-    open,
-    run,
-    service,
-    shell,
-    starship,
-    status,
-    unlink,
-    up,
-    variables,
-    whoami
-);
+mod cli;
+use cli::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
