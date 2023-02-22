@@ -1,7 +1,7 @@
 pub mod commands;
 
 pub mod client;
-pub(crate) mod config;
+pub mod config;
 pub(crate) mod consts;
 pub(crate) mod entities;
 pub mod gql;
