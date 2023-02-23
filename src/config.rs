@@ -39,6 +39,12 @@ pub struct Configs {
     root_config_path: PathBuf,
 }
 
+pub enum Environment {
+    Production,
+    Staging,
+    Dev,
+}
+
 impl Configs {
     pub fn new() -> Result<Self> {
         let root_config_partial_path = ".railway/config.json";
@@ -73,6 +79,30 @@ impl Configs {
 
     pub fn get_railway_token() -> Option<String> {
         std::env::var("RAILWAY_TOKEN").ok()
+    }
+
+    pub fn get_environment_id(&self) -> Environment {
+        match std::env::var("RAILWAY_ENV")
+            .map(|env| env.to_lowercase())
+            .as_deref()
+        {
+            Ok("production") => Environment::Production,
+            Ok("staging") => Environment::Staging,
+            Ok("dev") => Environment::Dev,
+            _ => Environment::Production,
+        }
+    }
+
+    pub fn get_host(&self) -> &'static str {
+        match self.get_environment_id() {
+            Environment::Production => "railway.app",
+            Environment::Staging => "railway-staging.app",
+            Environment::Dev => "railway-develop.app",
+        }
+    }
+
+    pub fn get_backboard(&self) -> String {
+        return format!("https://backboard.{}/graphql/v2", self.get_host());
     }
 
     pub fn get_current_working_directory() -> Result<String> {

@@ -30,12 +30,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         id: linked_project.project.to_owned(),
     };
 
-    let res = post_graphql::<queries::Project, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
     let plugins: Vec<_> = body
@@ -93,12 +88,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         )
     };
 
-    let res = post_graphql::<queries::Variables, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::Variables, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 

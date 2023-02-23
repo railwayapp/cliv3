@@ -12,11 +12,19 @@ use tokio::net::TcpListener;
 
 /// Login to your Railway account
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    /// Browserless login
+    #[clap(short, long)]
+    browserless: bool,
+}
 
-pub async fn command(_args: Args, _json: bool) -> Result<()> {
-    let mut config = Configs::new()?;
-    let render_config = config.get_render_config();
+pub async fn command(args: Args, _json: bool) -> Result<()> {
+    let mut configs = Configs::new()?;
+    let render_config = configs.get_render_config();
+
+    if args.browserless {
+        return Ok(browserless_login().await?);
+    }
 
     let confirm = inquire::Confirm::new("Open the browser")
         .with_default(true)
@@ -36,6 +44,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let hello = move |req: Request<hyper::body::Incoming>| {
         let tx = tx.clone();
         async move {
+            let configs = Configs::new()?;
+            let hostname = format!("https://{}", configs.get_host());
             if req.method() == hyper::Method::GET {
                 let mut pairs = req.uri().query().context("No query")?.split('&');
 
@@ -60,7 +70,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 );
                 response.headers_mut().insert(
                     "Access-Control-Allow-Origin",
-                    hyper::header::HeaderValue::from_static("https://railway.app"),
+                    hyper::header::HeaderValue::from_str(hostname.as_str()).unwrap(),
                 );
                 Ok::<Response<Full<Bytes>>, anyhow::Error>(response)
             } else {
@@ -75,7 +85,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 );
                 response.headers_mut().insert(
                     "Access-Control-Allow-Origin",
-                    hyper::header::HeaderValue::from_static("https://railway.app"),
+                    hyper::header::HeaderValue::from_str(hostname.as_str()).unwrap(),
                 );
                 response.headers_mut().insert(
                     "Content-Length",
@@ -86,8 +96,9 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             }
         }
     };
-
-    ::open::that(generate_cli_login_url(port)?)?;
+    if ::open::that(generate_cli_login_url(port)?).is_err() {
+        return Ok(browserless_login().await?);
+    }
     let spinner = indicatif::ProgressBar::new_spinner()
         .with_style(
             indicatif::ProgressStyle::default_spinner()
@@ -108,18 +119,13 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     });
 
     let token = rx.recv().await.context("No token received")?;
-    config.root_config.user.token = Some(token);
-    config.write()?;
+    configs.root_config.user.token = Some(token);
+    configs.write()?;
 
-    let client = GQLClient::new_authorized(&config)?;
+    let client = GQLClient::new_authorized(&configs)?;
     let vars = queries::user_meta::Variables {};
 
-    let res = post_graphql::<queries::UserMeta, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::UserMeta, _>(&client, configs.get_backboard(), vars).await?;
     let me = res.data.context("No data")?.me;
 
     spinner.finish_and_clear();
@@ -161,10 +167,85 @@ fn generate_cli_login_url(port: u16) -> Result<String> {
         Engine,
     };
     let payload = generate_login_payload(port)?;
+    let configs = Configs::new()?;
+    let hostname = configs.get_host();
 
     let engine = GeneralPurpose::new(&URL_SAFE, GeneralPurposeConfig::new());
     let encoded_payload = engine.encode(payload.as_bytes());
 
-    let url = format!("https://railway.app/cli-login?d={encoded_payload}");
+    let url = format!("https://{hostname}/cli-login?d={encoded_payload}");
     Ok(url)
+}
+
+async fn browserless_login() -> Result<()> {
+    let mut configs = Configs::new()?;
+    let hostname = hostname::get()?;
+    let hostname = hostname.to_str().context("Invalid hostname")?;
+
+    println!("{}", "Browserless Login".bold());
+    let client = GQLClient::new_unauthorized(&configs)?;
+    let vars = mutations::login_session_create::Variables {};
+    let res =
+        post_graphql::<mutations::LoginSessionCreate, _>(&client, configs.get_backboard(), vars)
+            .await?;
+    let word_code = res.data.context("No data")?.login_session_create;
+
+    use base64::{
+        alphabet::URL_SAFE,
+        engine::{GeneralPurpose, GeneralPurposeConfig},
+        Engine,
+    };
+    let payload = format!("wordCode={word_code}&hostname={hostname}");
+
+    let engine = GeneralPurpose::new(&URL_SAFE, GeneralPurposeConfig::new());
+    let encoded_payload = engine.encode(payload.as_bytes());
+    let hostname = configs.get_host();
+    println!(
+        "Please visit:\n  {}",
+        format!("https://{hostname}/cli-login?d={encoded_payload}")
+            .bold()
+            .underline()
+    );
+    println!("Your pairing code is: {}", word_code.bold().purple());
+    let spinner = indicatif::ProgressBar::new_spinner()
+        .with_style(
+            indicatif::ProgressStyle::default_spinner()
+                .tick_chars(TICK_STRING)
+                .template("{spinner:.green} {msg}")?,
+        )
+        .with_message("Waiting for login...");
+    spinner.enable_steady_tick(Duration::from_millis(100));
+    loop {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        let vars = mutations::login_session_consume::Variables {
+            code: word_code.clone(),
+        };
+        let res = post_graphql::<mutations::LoginSessionConsume, _>(
+            &client,
+            configs.get_backboard(),
+            vars,
+        )
+        .await?;
+        if let Some(token) = res.data.context("No data")?.login_session_consume {
+            spinner.finish_and_clear();
+            configs.root_config.user.token = Some(token);
+            configs.write()?;
+
+            let client = GQLClient::new_authorized(&configs)?;
+            let vars = queries::user_meta::Variables {};
+
+            let res = post_graphql::<queries::UserMeta, _>(&client, configs.get_backboard(), vars)
+                .await?;
+            let me = res.data.context("No data")?.me;
+
+            spinner.finish_and_clear();
+            println!(
+                "Logged in as {} ({})",
+                me.name.context("No name")?.bold(),
+                me.email
+            );
+            break;
+        }
+    }
+    Ok(())
 }

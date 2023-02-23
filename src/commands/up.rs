@@ -1,9 +1,11 @@
 use std::{
     path::PathBuf,
+    str::FromStr,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
+use graphql_client::GraphQLQuery;
 // use futures::StreamExt;
 // use graphql_client::GraphQLQuery;
 use gzp::{deflate::Gzip, ZBuilder};
@@ -11,10 +13,12 @@ use ignore::WalkBuilder;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
 use synchronized_writer::SynchronizedWriter;
 use tar::Builder;
+use tokio_stream::StreamExt;
 
 use crate::{
     consts::TICK_STRING,
     entities::UpResponse,
+    subscription::connect_subscription_client,
     // subscription::connect_subscription_client
 };
 
@@ -32,6 +36,7 @@ pub struct Args {
 
 pub async fn command(args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
+    let hostname = configs.get_host();
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project()?;
 
@@ -73,7 +78,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     parz.finish()?;
 
     let builder = client.post(format!(
-        "https://backboard.railway.app/project/{}/environment/{}/up",
+        "https://backboard.{hostname}/project/{}/environment/{}/up",
         linked_project.project, linked_project.environment
     ));
 
@@ -101,22 +106,18 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         return Ok(());
     }
 
-    // let subscription_client = connect_subscription_client(
-    //     &configs,
-    //     url::Url::from_str("wss://backboard.railway.app/graphql/v2")?,
-    // )
-    // .await?;
+    let subscription_client = connect_subscription_client(
+        &configs,
+        url::Url::from_str("wss://backboard.railway.app/graphql/v2")?,
+    )
+    .await?;
 
     let vars = queries::deployments::Variables {
         project_id: linked_project.project.clone(),
     };
 
-    let res = post_graphql::<queries::Deployments, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::Deployments, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 
@@ -128,7 +129,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         .map(|deployment| deployment.node)
         .collect();
     deployments.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-    let _latest_deployment = deployments.first().context("No deployments found")?;
+    let latest_deployment = deployments.first().context("No deployments found")?;
 
     // loop {
     //     let vars = queries::build_logs::Variables {
@@ -137,7 +138,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     //     };
     //     let res = post_graphql::<queries::BuildLogs, _>(
     //         &client,
-    //         "https://backboard.railway.app/graphql/v2",
+    //         configs.get_backboard(),
     //         vars,
     //     );
 
@@ -153,20 +154,21 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     //     tokio::time::sleep(Duration::from_secs(1)).await;
     // }
     // {
-    //     let vars = subscriptions::build_logs::Variables {
-    //         deployment_id: latest_deployment.id.clone(),
-    //     };
-    //     let query = subscriptions::BuildLogs::build_query(vars);
-    //     let mut subscription = subscription_client.start::<subscriptions::BuildLogs>(&query);
-    //     while let log = subscription.next().await {
-    //         dbg!(&log);
-    //         // if let Some(log) = log {
-    //         //     let log = log.data.context("Failed to retrieve log")?;
-    //         //     for line in log.build_logs {
-    //         //         println!("{}", line.message);
-    //         //     }
-    //         // }
-    //     }
+    let vars = subscriptions::build_logs::Variables {
+        deployment_id: latest_deployment.id.clone(),
+    };
+    let query = subscriptions::BuildLogs::build_query(vars);
+    let mut subscription = subscription_client.start::<subscriptions::BuildLogs>(&query);
+    while let log = subscription.next().await {
+        dbg!(&log);
+        if let Some(log) = log {
+            dbg!(log);
+            // let log = log.data.context("Failed to retrieve log")?;
+            // for line in log.build_logs {
+            //     println!("{}", line.message);
+            // }
+        }
+    }
     // }
     Ok(())
 }

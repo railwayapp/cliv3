@@ -20,12 +20,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let is_two_factor_enabled = {
         let vars = queries::two_factor_info::Variables {};
 
-        let res = post_graphql::<queries::TwoFactorInfo, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res = post_graphql::<queries::TwoFactorInfo, _>(&client, configs.get_backboard(), vars)
+            .await?;
         let info = res.data.context("No data")?.two_factor_info;
 
         info.is_verified
@@ -37,12 +33,9 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             .prompt()?;
         let vars = mutations::validate_two_factor::Variables { token };
 
-        let res = post_graphql::<mutations::ValidateTwoFactor, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res =
+            post_graphql::<mutations::ValidateTwoFactor, _>(&client, configs.get_backboard(), vars)
+                .await?;
         let valid = res.data.context("No data")?.two_factor_info_validate;
 
         if !valid {
@@ -54,12 +47,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         id: linked_project.project.clone(),
     };
 
-    let res = post_graphql::<queries::ProjectPlugins, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::ProjectPlugins, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
     let nodes = body.project.plugins.edges;
@@ -106,12 +95,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             .with_message(format!("Deleting {plugin}..."));
         spinner.enable_steady_tick(Duration::from_millis(100));
 
-        post_graphql::<mutations::PluginDelete, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        post_graphql::<mutations::PluginDelete, _>(&client, configs.get_backboard(), vars).await?;
 
         spinner.finish_with_message(format!("Deleted {plugin}"));
     }

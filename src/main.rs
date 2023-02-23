@@ -9,7 +9,7 @@ mod config;
 mod consts;
 mod entities;
 mod gql;
-// mod subscription;
+mod subscription;
 mod table;
 
 #[macro_use]

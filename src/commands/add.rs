@@ -21,7 +21,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     let res = post_graphql::<queries::ProjectPlugins, _>(
         &client,
-        "https://backboard.railway.app/graphql/v2",
+        configs.get_backboard(),
         vars,
     )
     .await?;
@@ -61,7 +61,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
         post_graphql::<mutations::PluginCreate, _>(
             &client,
-            "https://backboard.railway.app/graphql/v2",
+            configs.get_backboard(),
             vars,
         )
         .await?;
