@@ -1,5 +1,5 @@
 {
-  description = "A flake for building a Rust workspace using buildRustPackage.";
+  description = "The new, improved, and rustified CLI for interacting with Railway";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/22.11";
@@ -22,6 +22,7 @@
           rustc = toolchain;
         };
         code = naersk'.buildPackage {
+          name = "railway";
           src = ./.;
         };
       in rec {
@@ -31,10 +32,8 @@
         };
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            openssl
-            pkg-config
-            cmake
-            rust-bin.beta.latest.default
+            gcc
+            rust-bin.stable.latest.default
           ];
         };
       }
