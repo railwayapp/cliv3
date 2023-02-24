@@ -4,15 +4,14 @@ use std::{
     time::Duration,
 };
 
-use graphql_client::GraphQLQuery;
+use futures::StreamExt;
 use gzp::{deflate::Gzip, ZBuilder};
 use ignore::WalkBuilder;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
 use synchronized_writer::SynchronizedWriter;
 use tar::Builder;
-use tokio_stream::StreamExt;
 
-use crate::{consts::TICK_STRING, entities::UpResponse, subscription::connect_subscription_client};
+use crate::{consts::TICK_STRING, entities::UpResponse, subscription::subscribe_graphql};
 
 use super::*;
 
@@ -98,8 +97,6 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         return Ok(());
     }
 
-    let mut subscription_client = connect_subscription_client(&configs).await?;
-
     let vars = queries::deployments::Variables {
         project_id: linked_project.project.clone(),
     };
@@ -124,17 +121,14 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         filter: Some(String::new()),
         limit: Some(500),
     };
-    let query = subscriptions::BuildLogs::build_query(vars);
-    let mut subscription = subscription_client
-        .start::<subscriptions::BuildLogs>(&query)
-        .await?;
-    while let Some(log) = subscription.next().await {
-        if let Some(log) = log {
-            let log = log.data.context("Failed to retrieve log")?;
-            for line in log.build_logs {
-                println!("{}", line.message);
-            }
+
+    let (_client, mut log_stream) = subscribe_graphql::<subscriptions::BuildLogs>(vars).await?;
+    while let Some(Ok(log)) = log_stream.next().await {
+        let log = log.data.context("Failed to retrieve log")?;
+        for line in log.build_logs {
+            println!("{}", line.message);
         }
     }
+
     Ok(())
 }

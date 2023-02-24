@@ -11,6 +11,7 @@ mod entities;
 mod gql;
 mod subscription;
 mod table;
+mod tokio_spawner;
 
 #[macro_use]
 mod macros;
