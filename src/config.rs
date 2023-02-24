@@ -107,7 +107,7 @@ impl Configs {
     }
 
     pub fn get_backboard(&self) -> String {
-        return format!("https://backboard.{}/graphql/v2", self.get_host());
+        format!("https://backboard.{}/graphql/v2", self.get_host())
     }
 
     pub fn get_current_working_directory() -> Result<String> {

@@ -23,7 +23,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     let render_config = configs.get_render_config();
 
     if args.browserless {
-        return Ok(browserless_login().await?);
+        return browserless_login().await;
     }
 
     let confirm = inquire::Confirm::new("Open the browser")
@@ -97,7 +97,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         }
     };
     if ::open::that(generate_cli_login_url(port)?).is_err() {
-        return Ok(browserless_login().await?);
+        return browserless_login().await;
     }
     let spinner = indicatif::ProgressBar::new_spinner()
         .with_style(

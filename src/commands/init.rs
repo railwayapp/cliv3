@@ -90,7 +90,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             body.project_create.id.clone(),
             Some(body.project_create.name.clone()),
             environment.id,
-            Some(environment.name.clone()),
+            Some(environment.name),
         )?;
         configs.write()?;
         println!(
@@ -136,7 +136,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         body.project_create.id.clone(),
         Some(body.project_create.name.clone()),
         environment.id,
-        Some(environment.name.clone()),
+        Some(environment.name),
     )?;
     configs.write()?;
     println!(

@@ -25,7 +25,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    if body.project.services.edges.len() == 0 {
+    if body.project.services.edges.is_empty() {
         bail!("No services found for project");
     }
 
@@ -53,7 +53,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         .context("Failed to retrieve to get domains for service.")?;
 
     let domain = body.domains;
-    if domain.service_domains.len() > 0 || domain.custom_domains.len() > 0 {
+    if domain.service_domains.is_empty() || domain.custom_domains.is_empty() {
         bail!("Domain already exists on service");
     }
 
@@ -63,7 +63,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 .tick_chars(TICK_STRING)
                 .template("{spinner:.green} {msg}")?,
         )
-        .with_message(format!("Creating domain..."));
+        .with_message("Creating domain...");
     spinner.enable_steady_tick(Duration::from_millis(100));
 
     let vars = mutations::service_domain_create::Variables {
