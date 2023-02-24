@@ -6,11 +6,9 @@ use crate::consts::TICK_STRING;
 
 use super::*;
 
-// Generates a domain for a service if there is not a railway provided domain
-#[derive(Parser)]
-
+/// Generates a domain for a service if there is not a railway provided domain
 // Checks if the user is linked to a service, if not, it will generate a domain for the default service
-
+#[derive(Parser)]
 pub struct Args {}
 
 pub async fn command(_args: Args, _json: bool) -> Result<()> {
@@ -23,16 +21,11 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         id: linked_project.project.to_owned(),
     };
 
-    let res = post_graphql::<queries::Project, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    if body.project.services.edges.len() == 0 {
+    if body.project.services.edges.is_empty() {
         bail!("No services found for project");
     }
 
@@ -52,19 +45,15 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         service_id: service.clone(),
     };
 
-    let res = post_graphql::<queries::ServiceDomains, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::ServiceDomains, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res
         .data
         .context("Failed to retrieve to get domains for service.")?;
 
     let domain = body.domains;
-    if domain.service_domains.len() > 0 || domain.custom_domains.len() > 0 {
+    if domain.service_domains.is_empty() || domain.custom_domains.is_empty() {
         bail!("Domain already exists on service");
     }
 
@@ -74,7 +63,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 .tick_chars(TICK_STRING)
                 .template("{spinner:.green} {msg}")?,
         )
-        .with_message(format!("Creating domain..."));
+        .with_message("Creating domain...");
     spinner.enable_steady_tick(Duration::from_millis(100));
 
     let vars = mutations::service_domain_create::Variables {
@@ -82,12 +71,9 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         environment_id: linked_project.environment.clone(),
     };
 
-    let res = post_graphql::<mutations::ServiceDomainCreate, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<mutations::ServiceDomainCreate, _>(&client, configs.get_backboard(), vars)
+            .await?;
 
     let body = res.data.context("Failed to create service domain.")?;
 

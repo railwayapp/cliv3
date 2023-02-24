@@ -19,12 +19,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         id: linked_project.project.clone(),
     };
 
-    let res = post_graphql::<queries::ProjectPlugins, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::ProjectPlugins, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 
@@ -59,12 +55,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             .with_message(format!("Creating {plugin}..."));
         spinner.enable_steady_tick(Duration::from_millis(100));
 
-        post_graphql::<mutations::PluginCreate, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        post_graphql::<mutations::PluginCreate, _>(&client, configs.get_backboard(), vars).await?;
 
         spinner.finish_with_message(format!("Created {plugin}"));
     }

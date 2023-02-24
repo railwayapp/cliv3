@@ -17,12 +17,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         id: linked_project.project.to_owned(),
     };
 
-    let res = post_graphql::<queries::Project, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 
