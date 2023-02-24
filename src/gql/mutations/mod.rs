@@ -47,3 +47,11 @@ pub struct LoginSessionCreate;
     response_derives = "Debug, Serialize, Clone"
 )]
 pub struct LoginSessionConsume;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/ServiceDomainCreate.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct ServiceDomainCreate;

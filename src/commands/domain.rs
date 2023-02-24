@@ -1,0 +1,87 @@
+use std::time::Duration;
+
+use anyhow::bail;
+
+use crate::consts::TICK_STRING;
+
+use super::*;
+
+/// Generates a domain for a service if there is not a railway provided domain
+// Checks if the user is linked to a service, if not, it will generate a domain for the default service
+#[derive(Parser)]
+pub struct Args {}
+
+pub async fn command(_args: Args, _json: bool) -> Result<()> {
+    let configs = Configs::new()?;
+
+    let client = GQLClient::new_authorized(&configs)?;
+    let linked_project = configs.get_linked_project()?;
+
+    let vars = queries::project::Variables {
+        id: linked_project.project.to_owned(),
+    };
+
+    let res = post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
+
+    let body = res.data.context("Failed to retrieve response body")?;
+
+    if body.project.services.edges.len() == 0 {
+        bail!("No services found for project");
+    }
+
+    // If there is only one service, it will generate a domain for that service
+    let service = if body.project.services.edges.len() == 1 {
+        body.project.services.edges[0].node.clone().id
+    } else {
+        let Some(service) = linked_project.service.clone() else {
+        bail!("No service linked");
+      };
+        service.clone()
+    };
+
+    let vars = queries::service_domains::Variables {
+        project_id: linked_project.project.clone(),
+        environment_id: linked_project.environment.clone(),
+        service_id: service.clone(),
+    };
+
+    let res =
+        post_graphql::<queries::ServiceDomains, _>(&client, configs.get_backboard(), vars).await?;
+
+    let body = res
+        .data
+        .context("Failed to retrieve to get domains for service.")?;
+
+    let domain = body.domains;
+    if domain.service_domains.len() > 0 || domain.custom_domains.len() > 0 {
+        bail!("Domain already exists on service");
+    }
+
+    let spinner = indicatif::ProgressBar::new_spinner()
+        .with_style(
+            indicatif::ProgressStyle::default_spinner()
+                .tick_chars(TICK_STRING)
+                .template("{spinner:.green} {msg}")?,
+        )
+        .with_message(format!("Creating domain..."));
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
+    let vars = mutations::service_domain_create::Variables {
+        service_id: service,
+        environment_id: linked_project.environment.clone(),
+    };
+
+    let res =
+        post_graphql::<mutations::ServiceDomainCreate, _>(&client, configs.get_backboard(), vars)
+            .await?;
+
+    let body = res.data.context("Failed to create service domain.")?;
+
+    let domain = body.service_domain_create.domain;
+
+    spinner.finish_and_clear();
+
+    println!("Service Domain created: {}", domain.bold());
+
+    Ok(())
+}
