@@ -90,7 +90,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
 
         all_variables.append(&mut body.variables);
     } else {
-        println!("No service linked, skipping service variables");
+        eprintln!("No service linked, skipping service variables");
     }
 
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "sh".to_string());

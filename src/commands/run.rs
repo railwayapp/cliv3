@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use anyhow::bail;
+
 use super::*;
 
 /// Run a local command using variables from the active environment
@@ -9,11 +11,8 @@ pub struct Args {
     #[clap(short, long)]
     service: Option<String>,
 
-    /// Command to run
-    command: String,
-
     /// Args to pass to the command
-    #[clap(raw = true)]
+    #[clap(trailing_var_arg = true)]
     args: Vec<String>,
 }
 
@@ -95,11 +94,32 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
 
         all_variables.append(&mut body.variables);
     } else {
-        println!("No service linked, skipping service variables");
+        let services: Vec<_> = body.project.services.edges.iter().collect();
+        if services.len() > 1 {
+            bail!(
+                "Multiple services found, please link one using {}",
+                "railway service".bold().dimmed()
+            );
+        }
+        let service_id = services.first().context("No services found")?;
+
+        let vars = queries::variables::Variables {
+            environment_id: linked_project.environment.clone(),
+            project_id: linked_project.project.clone(),
+            service_id: Some(service_id.node.id.clone()),
+            plugin_id: None,
+        };
+
+        let res =
+            post_graphql::<queries::Variables, _>(&client, configs.get_backboard(), vars).await?;
+
+        let mut body = res.data.context("Failed to retrieve response body")?;
+
+        all_variables.append(&mut body.variables);
     }
 
-    tokio::process::Command::new(args.command)
-        .args(args.args)
+    tokio::process::Command::new(args.args.first().context("No command provided")?)
+        .args(args.args[1..].iter())
         .envs(all_variables)
         .spawn()
         .context("Failed to spawn command")?

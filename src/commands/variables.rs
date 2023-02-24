@@ -93,7 +93,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
     let body = res.data.context("Failed to retrieve response body")?;
 
     if body.variables.is_empty() {
-        println!("No variables found");
+        eprintln!("No variables found");
         return Ok(());
     }
 
