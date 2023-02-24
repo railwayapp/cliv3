@@ -7,6 +7,7 @@ pub mod add;
 pub mod completion;
 pub mod delete;
 pub mod docs;
+pub mod domain;
 pub mod environment;
 pub mod init;
 pub mod link;

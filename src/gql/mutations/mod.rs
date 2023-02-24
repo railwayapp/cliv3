@@ -31,3 +31,11 @@ pub struct ValidateTwoFactor;
     response_derives = "Debug, Serialize, Clone"
 )]
 pub struct ProjectCreate;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/ServiceDomainCreate.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct ServiceDomainCreate;

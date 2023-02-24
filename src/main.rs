@@ -34,6 +34,7 @@ commands_enum!(
     add,
     completion,
     delete,
+    domain,
     docs,
     environment,
     init,
