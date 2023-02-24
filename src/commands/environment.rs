@@ -4,7 +4,9 @@ use super::{queries::project::ProjectProjectEnvironmentsEdgesNode, *};
 
 /// Change the active environment
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    environment: Option<String>,
+}
 
 pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
@@ -24,17 +26,48 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    let environments: Vec<_> = body
-        .project
-        .environments
-        .edges
-        .iter()
-        .map(|env| Environment(&env.node))
-        .collect();
+    let environment = if let Some(environment) = _args.environment.clone() {
+        let env = body
+            .project
+            .environments
+            .edges
+            .iter()
+            .map(|env| Environment(&env.node))
+            .find(|env| env.0.name == environment);
 
-    let environment = inquire::Select::new("Select an environment", environments)
-        .with_render_config(configs.get_render_config())
-        .prompt()?;
+        env.ok_or_else(|| anyhow::anyhow!("Environment not found"))?
+    } else {
+        let environments: Vec<_> = body
+            .project
+            .environments
+            .edges
+            .iter()
+            .map(|env| Environment(&env.node))
+            .collect();
+
+        let env = inquire::Select::new("Select an environment", environments)
+            .with_render_config(configs.get_render_config())
+            .prompt()?;
+
+        env
+    };
+
+    // dbg!(body.clone().project.environments.edges);
+    // dbg!(environment.clone());
+    // // early return
+    // return Ok(());
+
+    // let environments: Vec<_> = body
+    //     .project
+    //     .environments
+    //     .edges
+    //     .iter()
+    //     .map(|env| Environment(&env.node))
+    //     .collect();
+
+    // let environment = inquire::Select::new("Select an environment", environments)
+    //     .with_render_config(configs.get_render_config())
+    //     .prompt()?;
 
     configs.link_project(
         linked_project.project.clone(),
