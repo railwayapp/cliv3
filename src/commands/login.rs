@@ -183,7 +183,7 @@ async fn browserless_login() -> Result<()> {
     let hostname = hostname.to_str().context("Invalid hostname")?;
 
     println!("{}", "Browserless Login".bold());
-    let client = GQLClient::new_unauthorized(&configs)?;
+    let client = GQLClient::new_unauthorized()?;
     let vars = mutations::login_session_create::Variables {};
     let res =
         post_graphql::<mutations::LoginSessionCreate, _>(&client, configs.get_backboard(), vars)

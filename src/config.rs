@@ -47,7 +47,12 @@ pub enum Environment {
 
 impl Configs {
     pub fn new() -> Result<Self> {
-        let root_config_partial_path = ".railway/config.json";
+        let environment = Self::get_environment_id();
+        let root_config_partial_path = match environment {
+            Environment::Production => ".railway/config.json",
+            Environment::Staging => ".railway/config-staging.json",
+            Environment::Dev => ".railway/config-dev.json",
+        };
 
         let home_dir = dirs::home_dir().context("Unable to get home directory")?;
         let root_config_path = std::path::Path::new(&home_dir).join(root_config_partial_path);
@@ -81,7 +86,7 @@ impl Configs {
         std::env::var("RAILWAY_TOKEN").ok()
     }
 
-    pub fn get_environment_id(&self) -> Environment {
+    pub fn get_environment_id() -> Environment {
         match std::env::var("RAILWAY_ENV")
             .map(|env| env.to_lowercase())
             .as_deref()
@@ -94,7 +99,7 @@ impl Configs {
     }
 
     pub fn get_host(&self) -> &'static str {
-        match self.get_environment_id() {
+        match Self::get_environment_id() {
             Environment::Production => "railway.app",
             Environment::Staging => "railway-staging.app",
             Environment::Dev => "railway-develop.app",

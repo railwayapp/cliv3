@@ -1,13 +1,10 @@
 use std::{
     path::PathBuf,
-    str::FromStr,
     sync::{Arc, Mutex},
     time::Duration,
 };
 
 use graphql_client::GraphQLQuery;
-// use futures::StreamExt;
-// use graphql_client::GraphQLQuery;
 use gzp::{deflate::Gzip, ZBuilder};
 use ignore::WalkBuilder;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
@@ -15,12 +12,7 @@ use synchronized_writer::SynchronizedWriter;
 use tar::Builder;
 use tokio_stream::StreamExt;
 
-use crate::{
-    consts::TICK_STRING,
-    entities::UpResponse,
-    subscription::connect_subscription_client,
-    // subscription::connect_subscription_client
-};
+use crate::{consts::TICK_STRING, entities::UpResponse, subscription::connect_subscription_client};
 
 use super::*;
 
@@ -106,11 +98,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         return Ok(());
     }
 
-    let subscription_client = connect_subscription_client(
-        &configs,
-        url::Url::from_str("wss://backboard.railway.app/graphql/v2")?,
-    )
-    .await?;
+    let mut subscription_client = connect_subscription_client(&configs).await?;
 
     let vars = queries::deployments::Variables {
         project_id: linked_project.project.clone(),
@@ -131,44 +119,22 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     deployments.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     let latest_deployment = deployments.first().context("No deployments found")?;
 
-    // loop {
-    //     let vars = queries::build_logs::Variables {
-    //         deployment_id: latest_deployment.id.clone(),
-    //         start_date: Some(chrono::Utc::now()),
-    //     };
-    //     let res = post_graphql::<queries::BuildLogs, _>(
-    //         &client,
-    //         configs.get_backboard(),
-    //         vars,
-    //     );
-
-    //     let body = res
-    //         .await?
-    //         .data
-    //         .context("Failed to retrieve response body")?;
-
-    //     for line in body.build_logs {
-    //         println!("{}", line.message);
-    //     }
-
-    //     tokio::time::sleep(Duration::from_secs(1)).await;
-    // }
-    // {
     let vars = subscriptions::build_logs::Variables {
         deployment_id: latest_deployment.id.clone(),
+        filter: Some(String::new()),
+        limit: Some(500),
     };
     let query = subscriptions::BuildLogs::build_query(vars);
-    let mut subscription = subscription_client.start::<subscriptions::BuildLogs>(&query);
-    while let log = subscription.next().await {
-        dbg!(&log);
+    let mut subscription = subscription_client
+        .start::<subscriptions::BuildLogs>(&query)
+        .await?;
+    while let Some(log) = subscription.next().await {
         if let Some(log) = log {
-            dbg!(log);
-            // let log = log.data.context("Failed to retrieve log")?;
-            // for line in log.build_logs {
-            //     println!("{}", line.message);
-            // }
+            let log = log.data.context("Failed to retrieve log")?;
+            for line in log.build_logs {
+                println!("{}", line.message);
+            }
         }
     }
-    // }
     Ok(())
 }
