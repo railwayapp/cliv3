@@ -1,4 +1,4 @@
-# Railway CLI (v3)
+# Railway CLI (3.x.x)
 
 [![CI](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml/badge.svg)](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml)
 
@@ -6,6 +6,14 @@ This is the command line interface for [Railway](https://railway.app). Use it to
 
 [View the docs](https://docs.railway.app/develop/cli)
 
+The Railway command line interface (CLI) connects your code to your Railway project from the command line.
+
+The Railway CLI allows you to
+
+- Create new Railway projects from the terminal
+- Link to an existing Railway project
+- Pull down environment variables for your project locally to run
+- Create services and databases right from the comfort of your fingertips
 ## Status
 
 Currently pre-release. We are looking for feedback and suggestions. Please join our [Discord](https://discord.gg/railway) to provide feedback.

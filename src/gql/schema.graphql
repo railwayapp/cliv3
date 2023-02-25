@@ -35,6 +35,13 @@ input ApiTokenCreateInput {
 	teamId: String
 }
 
+type BanReasonHistory implements Node {
+	actor: User!
+	banReason: String
+	createdAt: DateTime!
+	id: ID!
+}
+
 enum Builder {
 	HEROKU
 	NIXPACKS
@@ -55,14 +62,6 @@ enum CnameCheckStatus {
 	WAITING
 }
 
-input ConfigureSharedVariableInput {
-	disabledServiceIds: [String!]!
-	enabledServiceIds: [String!]!
-	environmentId: String!
-	name: String!
-	projectId: String!
-}
-
 type CustomDomain implements Domain {
 	cnameCheck: CnameCheck!
 	createdAt: DateTime
@@ -72,6 +71,11 @@ type CustomDomain implements Domain {
 	id: ID!
 	serviceId: String!
 	updatedAt: DateTime
+}
+
+type CustomDomainAvailable {
+	available: Boolean!
+	message: String!
 }
 
 input CustomDomainCreateInput {
@@ -386,7 +390,6 @@ type Mutation {
 	Deletes an API token.
 	"""
 	apiTokenDelete(id: String!): Boolean!
-	configureSharedVariable(input: ConfigureSharedVariableInput!): Variable!
 
 	"""
 	Creates a new custom domain.
@@ -441,6 +444,21 @@ type Mutation {
 	Creates a new job application.
 	"""
 	jobApplicationCreate(input: JobApplicationCreateInput!): Boolean!
+
+	"""
+	Get a token for a login session if it exists
+	"""
+	loginSessionConsume(code: String!): String
+
+	"""
+	Start a CLI login session
+	"""
+	loginSessionCreate: String!
+
+	"""
+	Deletes session for current user if it exists
+	"""
+	logout: Boolean!
 
 	"""
 	Creates a new plugin.
@@ -540,6 +558,7 @@ type Mutation {
 	Updates a service.
 	"""
 	serviceUpdate(id: String!, input: ServiceUpdateInput!): Service!
+	sharedVariableConfigure(input: SharedVariableConfigureInput!): Variable!
 
 	"""
 	Creates a support request.
@@ -550,6 +569,11 @@ type Mutation {
 	Bans a team.
 	"""
 	teamBan(id: String!, input: TeamBanInput!): Boolean!
+
+	"""
+	Changes a user team permissions.
+	"""
+	teamPermissionChange(input: TeamPermissionChangeInput!): Boolean!
 
 	"""
 	Stops all deployments and plugins for a team.
@@ -907,6 +931,17 @@ type Query {
 	): QueryApiTokensConnection!
 
 	"""
+	Gets the ban reason history for a user.
+	"""
+	banReasonHistory(
+		after: String
+		before: String
+		first: Int
+		last: Int
+		userId: String!
+	): QueryBanReasonHistoryConnection!
+
+	"""
 	Fetch logs for a build
 	"""
 	buildLogs(
@@ -919,9 +954,9 @@ type Query {
 	changelogBlockImage(id: String!): String!
 
 	"""
-	Checks the cname status of a domain
+	Checks if a custom domain is available.
 	"""
-	checkCname(id: String!): CnameCheck!
+	customDomainAvailable(domain: String!): CustomDomainAvailable!
 
 	"""
 	Fetch logs for a deployment
@@ -1174,6 +1209,16 @@ type QueryApiTokensConnectionEdge {
 	node: ApiToken!
 }
 
+type QueryBanReasonHistoryConnection {
+	edges: [QueryBanReasonHistoryConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type QueryBanReasonHistoryConnectionEdge {
+	cursor: String!
+	node: BanReasonHistory!
+}
+
 type QueryDeploymentTriggersConnection {
 	edges: [QueryDeploymentTriggersConnectionEdge!]!
 	pageInfo: PageInfo!
@@ -1402,6 +1447,14 @@ The ServiceVariables scalar type represents values as the TypeScript type: Recor
 """
 scalar ServiceVariables
 
+input SharedVariableConfigureInput {
+	disabledServiceIds: [String!]!
+	enabledServiceIds: [String!]!
+	environmentId: String!
+	name: String!
+	projectId: String!
+}
+
 type Subscription {
 	"""
 	Stream logs for a build
@@ -1440,8 +1493,28 @@ input TeamBanInput {
 	banReason: String!
 }
 
+type TeamPermission implements Node {
+	createdAt: DateTime!
+	id: ID!
+	role: TeamRole!
+	teamId: String!
+	updatedAt: DateTime!
+	userId: String!
+}
+
+input TeamPermissionChangeInput {
+	role: TeamRole!
+	teamId: String!
+	userId: String!
+}
+
 input TeamResourcesStopInput {
 	reason: String!
+}
+
+enum TeamRole {
+	ADMIN
+	MEMBER
 }
 
 type Template implements Node {

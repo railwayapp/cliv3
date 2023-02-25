@@ -22,12 +22,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     let vars = queries::user_projects::Variables {};
 
-    let res = post_graphql::<queries::UserProjects, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::UserProjects, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
 
@@ -83,12 +79,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
                 team_id: Some(team.id.clone()),
             };
 
-            let res = post_graphql::<queries::Projects, _>(
-                &client,
-                "https://backboard.railway.app/graphql/v2",
-                vars,
-            )
-            .await?;
+            let res = post_graphql::<queries::Projects, _>(&client, configs.get_backboard(), vars)
+                .await?;
 
             let body = res.data.context("Failed to retrieve response body")?;
             let mut projects: Vec<_> = body

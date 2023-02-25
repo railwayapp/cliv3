@@ -60,12 +60,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
 
     let vars = queries::user_projects::Variables {};
 
-    let res = post_graphql::<queries::UserProjects, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<queries::UserProjects, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
     let teams: Vec<_> = body.me.teams.edges.iter().map(|team| &team.node).collect();
@@ -77,12 +73,9 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             team_id: None,
         };
 
-        let res = post_graphql::<mutations::ProjectCreate, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res =
+            post_graphql::<mutations::ProjectCreate, _>(&client, configs.get_backboard(), vars)
+                .await?;
 
         let body = res.data.context("Failed to retrieve response body")?;
         let environment = body
@@ -97,7 +90,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
             body.project_create.id.clone(),
             Some(body.project_create.name.clone()),
             environment.id,
-            Some(environment.name.clone()),
+            Some(environment.name),
         )?;
         configs.write()?;
         println!(
@@ -127,12 +120,8 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         team_id,
     };
 
-    let res = post_graphql::<mutations::ProjectCreate, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res =
+        post_graphql::<mutations::ProjectCreate, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
     let environment = body
@@ -147,7 +136,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         body.project_create.id.clone(),
         Some(body.project_create.name.clone()),
         environment.id,
-        Some(environment.name.clone()),
+        Some(environment.name),
     )?;
     configs.write()?;
     println!(

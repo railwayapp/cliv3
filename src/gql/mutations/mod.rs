@@ -31,3 +31,27 @@ pub struct ValidateTwoFactor;
     response_derives = "Debug, Serialize, Clone"
 )]
 pub struct ProjectCreate;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/LoginSessionCreate.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct LoginSessionCreate;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/LoginSessionConsume.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct LoginSessionConsume;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/gql/schema.graphql",
+    query_path = "src/gql/mutations/strings/ServiceDomainCreate.graphql",
+    response_derives = "Debug, Serialize, Clone"
+)]
+pub struct ServiceDomainCreate;
