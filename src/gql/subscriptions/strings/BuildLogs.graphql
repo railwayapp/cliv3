@@ -1,6 +1,10 @@
-subscription BuildLogs($deploymentId: String!) {
-	buildLogs(deploymentId: $deploymentId) {
-		message
-		timestamp
+subscription BuildLogs($deploymentId: String!, $filter: String, $limit: Int) {
+	buildLogs(deploymentId: $deploymentId, filter: $filter, limit: $limit) {
+		...LogFields
 	}
+}
+
+fragment LogFields on Log {
+	timestamp
+	message
 }

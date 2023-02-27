@@ -19,12 +19,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         id: linked_project.project.to_owned(),
     };
 
-    let res = post_graphql::<queries::Project, _>(
-        &client,
-        "https://backboard.railway.app/graphql/v2",
-        vars,
-    )
-    .await?;
+    let res = post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
 
     let body = res.data.context("Failed to retrieve response body")?;
     let mut all_variables = BTreeMap::<String, String>::new();
@@ -46,12 +41,8 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             plugin_id: Some(plugin.id.clone()),
         };
 
-        let res = post_graphql::<queries::Variables, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res =
+            post_graphql::<queries::Variables, _>(&client, configs.get_backboard(), vars).await?;
 
         let mut body = res.data.context("Failed to retrieve response body")?;
 
@@ -78,12 +69,8 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             plugin_id: None,
         };
 
-        let res = post_graphql::<queries::Variables, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res =
+            post_graphql::<queries::Variables, _>(&client, configs.get_backboard(), vars).await?;
 
         let mut body = res.data.context("Failed to retrieve response body")?;
 
@@ -96,18 +83,14 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             plugin_id: None,
         };
 
-        let res = post_graphql::<queries::Variables, _>(
-            &client,
-            "https://backboard.railway.app/graphql/v2",
-            vars,
-        )
-        .await?;
+        let res =
+            post_graphql::<queries::Variables, _>(&client, configs.get_backboard(), vars).await?;
 
         let mut body = res.data.context("Failed to retrieve response body")?;
 
         all_variables.append(&mut body.variables);
     } else {
-        println!("No service linked, skipping service variables");
+        eprintln!("No service linked, skipping service variables");
     }
 
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "sh".to_string());
