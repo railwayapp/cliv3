@@ -12,6 +12,8 @@ let
     [
       cmake
       rust
+      act
+      cargo-zigbuild
     ];
 
   # macOS only

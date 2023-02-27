@@ -29,7 +29,9 @@ serde_json = "1.0.93"
 reqwest = { version = "0.11.14", default-features = false, features = [
   "rustls-tls",
 ] }
-chrono = { version = "0.4.23", features = ["serde"] }
+chrono = { git = "https://github.com/chronotope/chrono", rev = "057157296d614fe364ef4ca07f1d337282542c7a", features = [
+  "serde",
+] }
 graphql_client = { version = "0.11.0", features = ["reqwest-rustls"] }
 paste = "1.0.11"
 tokio = { version = "1.25.0", features = ["full"] }
