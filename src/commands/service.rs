@@ -34,7 +34,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
 
         configs.link_project(
             body.project.id.clone(),
-            Some(body.project.name.clone()),
+            Some(body.project.name),
             linked_project.environment.clone(),
             linked_project.environment_name.clone(),
         )?;
