@@ -29,6 +29,14 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v3.7.0
+        with:
+          configuration: ".github/changelog-configuration.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub release
         id: release
         uses: softprops/action-gh-release@v1
@@ -111,6 +119,9 @@ jobs:
           tar czvf ../../../rlwy-${{ needs.create-release.outputs.rlwy_version }}-${{ matrix.target }}.tar.gz rlwy
           cd -
 
+      - name: Add Checksums
+        run: for file in rlwy-*/rlwy-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
+
       - name: Upload release archive
         uses: softprops/action-gh-release@v1
         env:
@@ -134,8 +145,13 @@ jobs:
           tag: ${{ needs.create-release.outputs.rlwy_version }}
           file: rlwy-${{ needs.create-release.outputs.rlwy_version }}-amd64.deb
 
-      - name: Set SHA
-        if: matrix.config.os == 'macos-latest'
-        id: shasum
-        run: |
-          echo ::set-output name=sha::"$(shasum -a 256 ./release/gitui-mac.tar.gz | awk '{printf $1}')"
+      - name: Update homebrew tap
+        uses: mislav/bump-homebrew-formula-action@v2
+        if: "matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin' && !contains(github.ref, '-')"
+        with:
+          formula-name: rlwy
+          formula-path: rlwy.rb
+          homebrew-tap: railwayapp/homebrew-tap
+          download-url: https://github.com/railwayapp/rlwy/releases/latest/download/rlwy-${{ needs.create-release.outputs.rlwy_version }}-${{ matrix.target }}.tar.gz
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
