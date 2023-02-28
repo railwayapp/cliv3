@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use colored::Colorize;
 use inquire::ui::{Attributes, RenderConfig, StyleSheet, Styled};
 use serde::{Deserialize, Serialize};
 
@@ -61,7 +62,14 @@ impl Configs {
             let mut serialized_config = vec![];
             file.read_to_end(&mut serialized_config)?;
 
-            let root_config: RailwayConfig = serde_json::from_slice(&serialized_config)?;
+            let root_config: RailwayConfig = serde_json::from_slice(&serialized_config)
+                .unwrap_or_else(|_| {
+                    eprintln!("{}", "Unable to parse config file, regenerating".yellow());
+                    RailwayConfig {
+                        projects: BTreeMap::new(),
+                        user: RailwayUser { token: None },
+                    }
+                });
 
             let config = Self {
                 root_config,

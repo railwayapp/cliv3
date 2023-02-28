@@ -1,9 +1,12 @@
 use std::fmt::Display;
 
-use crate::commands::queries::user_projects::UserProjectsMeTeamsEdgesNode;
+use crate::{
+    commands::queries::user_projects::UserProjectsMeTeamsEdgesNode, consts::PROJECT_NOT_FOUND,
+};
 
 use super::{
     queries::{
+        project::ProjectProjectEnvironmentsEdgesNode,
         projects::{ProjectsProjectsEdgesNode, ProjectsProjectsEdgesNodeEnvironmentsEdgesNode},
         user_projects::{
             UserProjectsMeProjectsEdgesNode, UserProjectsMeProjectsEdgesNodeEnvironmentsEdgesNode,
@@ -14,11 +17,42 @@ use super::{
 
 /// Associate existing project with current directory, may specify projectId as an argument
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    project_id: Option<String>,
+}
 
-pub async fn command(_args: Args, _json: bool) -> Result<()> {
+pub async fn command(args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
+
+    if let Some(project_id) = args.project_id {
+        let vars = queries::project::Variables { id: project_id };
+
+        let res =
+            post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
+        let body = res.data.context(PROJECT_NOT_FOUND)?;
+
+        let environment = inquire::Select::new(
+            "Select an environment",
+            body.project
+                .environments
+                .edges
+                .iter()
+                .map(|env| ProjectEnvironment(&env.node))
+                .collect(),
+        )
+        .with_render_config(configs.get_render_config())
+        .prompt()?;
+
+        configs.link_project(
+            body.project.id.clone(),
+            Some(body.project.name.clone()),
+            environment.0.id.clone(),
+            Some(environment.0.name.clone()),
+        )?;
+        configs.write()?;
+        return Ok(());
+    }
 
     let vars = queries::user_projects::Variables {};
 
@@ -198,5 +232,14 @@ impl<'a> Display for Team<'a> {
             Team::Team(team) => write!(f, "{}", team.name),
             Team::Personal => write!(f, "{}", "Personal".bold()),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct ProjectEnvironment<'a>(&'a ProjectProjectEnvironmentsEdgesNode);
+
+impl<'a> Display for ProjectEnvironment<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.name)
     }
 }
