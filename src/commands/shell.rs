@@ -93,7 +93,11 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         eprintln!("No service linked, skipping service variables");
     }
 
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "sh".to_string());
+    let shell = std::env::var("SHELL").unwrap_or(match std::env::consts::OS {
+        "windows" => "cmd".to_string(),
+        _ => "sh".to_string(),
+    });
+
     tokio::process::Command::new(shell)
         .envs(all_variables)
         .spawn()
