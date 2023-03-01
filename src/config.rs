@@ -10,7 +10,12 @@ use colored::Colorize;
 use inquire::ui::{Attributes, RenderConfig, StyleSheet, Styled};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+use crate::{
+    client::{post_graphql, GQLClient},
+    commands::queries,
+};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RailwayProject {
     pub project_path: String,
@@ -126,14 +131,34 @@ impl Configs {
         Ok(path.into())
     }
 
-    pub fn get_linked_project(&self) -> Result<&RailwayProject> {
+    pub async fn get_linked_project(&self) -> Result<RailwayProject> {
+        if let Some(token) = Self::get_railway_token() {
+            let vars = queries::project_token::Variables {};
+            let client = GQLClient::new_authorized(self)?;
+
+            let res = post_graphql::<queries::ProjectToken, _>(&client, self.get_backboard(), vars)
+                .await?;
+
+            let data = res.data.context("Invalid project token!")?;
+
+            let project = RailwayProject {
+                project_path: Self::get_current_working_directory()?,
+                name: Some(data.project_token.project.name),
+                project: data.project_token.project.id,
+                environment: data.project_token.environment.id,
+                environment_name: Some(data.project_token.environment.name),
+                service: None,
+            };
+            return Ok(project);
+        }
+
         let path = Self::get_current_working_directory()?;
         let project = self
             .root_config
             .projects
             .get(&path)
             .context("Project not found! Run `railway link` to link to a project")?;
-        Ok(project)
+        Ok(project.clone())
     }
 
     pub fn get_linked_project_mut(&mut self) -> Result<&mut RailwayProject> {

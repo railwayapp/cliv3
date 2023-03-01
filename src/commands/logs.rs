@@ -19,7 +19,7 @@ pub struct Args {
 pub async fn command(args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().await?;
 
     let vars = queries::deployments::Variables {
         project_id: linked_project.project.clone(),

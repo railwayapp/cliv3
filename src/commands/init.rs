@@ -11,7 +11,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
     let render_config = configs.get_render_config();
     let client = GQLClient::new_authorized(&configs)?;
-    let _linked_project = configs.get_linked_project().ok();
+    let _linked_project = configs.get_linked_project().await.ok();
 
     inquire::Select::new(
         "Starting Point",

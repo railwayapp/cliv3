@@ -1092,6 +1092,7 @@ type ProjectToken implements Node {
 	environmentId: String!
 	id: ID!
 	name: String!
+	project: Project!
 	projectId: String!
 }
 
