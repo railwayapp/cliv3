@@ -18,6 +18,11 @@ use super::{
 /// Associate existing project with current directory, may specify projectId as an argument
 #[derive(Parser)]
 pub struct Args {
+    #[clap(long)]
+    /// Environment to link to
+    environment: Option<String>,
+
+    /// Project ID to link to
     project_id: Option<String>,
 }
 
@@ -32,17 +37,30 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
         let body = res.data.context(PROJECT_NOT_FOUND)?;
 
-        let environment = inquire::Select::new(
-            "Select an environment",
-            body.project
+        let environment = if let Some(environment_name_or_id) = args.environment {
+            let environment = body
+                .project
                 .environments
                 .edges
                 .iter()
-                .map(|env| ProjectEnvironment(&env.node))
-                .collect(),
-        )
-        .with_render_config(configs.get_render_config())
-        .prompt()?;
+                .find(|env| {
+                    env.node.name == environment_name_or_id || env.node.id == environment_name_or_id
+                })
+                .context("Environment not found")?;
+            ProjectEnvironment(&environment.node)
+        } else {
+            inquire::Select::new(
+                "Select an environment",
+                body.project
+                    .environments
+                    .edges
+                    .iter()
+                    .map(|env| ProjectEnvironment(&env.node))
+                    .collect(),
+            )
+            .with_render_config(configs.get_render_config())
+            .prompt()?
+        };
 
         configs.link_project(
             body.project.id.clone(),
