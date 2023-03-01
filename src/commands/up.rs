@@ -29,7 +29,7 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let hostname = configs.get_host();
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().await?;
 
     let spinner = ProgressBar::new_spinner()
         .with_style(

@@ -15,7 +15,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let configs = Configs::new()?;
 
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().await?;
 
     let vars = queries::project::Variables {
         id: linked_project.project.to_owned(),

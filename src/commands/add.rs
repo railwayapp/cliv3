@@ -13,7 +13,7 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let render_config = configs.get_render_config();
 
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().await?;
 
     let vars = queries::project_plugins::Variables {
         id: linked_project.project.clone(),
