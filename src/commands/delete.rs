@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::bail;
+use is_terminal::IsTerminal;
 
 use crate::consts::{ABORTED_BY_USER, TICK_STRING};
 
@@ -11,6 +12,9 @@ use super::{queries::project_plugins::PluginType, *};
 pub struct Args {}
 
 pub async fn command(_args: Args, _json: bool) -> Result<()> {
+    if !std::io::stdout().is_terminal() {
+        bail!("Cannot delete plugins in non-interactive mode");
+    }
     let configs = Configs::new()?;
     let render_config = configs.get_render_config();
 
@@ -56,10 +60,6 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         .iter()
         .map(|p| plugin_enum_to_string(&p.node.name))
         .collect();
-
-    // inquire::Text::new("Are you sure you want to delete this project? (y/n)")
-    //     .with_render_config(render_config)
-    //     .prompt()?;
 
     let selected = inquire::MultiSelect::new("Select plugins to delete", project_plugins)
         .with_render_config(render_config)

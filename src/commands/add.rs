@@ -78,18 +78,23 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             project_id: linked_project.project.clone(),
             name: plugin.to_lowercase(),
         };
-        let spinner = indicatif::ProgressBar::new_spinner()
-            .with_style(
-                indicatif::ProgressStyle::default_spinner()
-                    .tick_chars(TICK_STRING)
-                    .template("{spinner:.green} {msg}")?,
-            )
-            .with_message(format!("Creating {plugin}..."));
-        spinner.enable_steady_tick(Duration::from_millis(100));
-
-        post_graphql::<mutations::PluginCreate, _>(&client, configs.get_backboard(), vars).await?;
-
-        spinner.finish_with_message(format!("Created {plugin}"));
+        if !std::io::stdout().is_terminal() {
+            println!("Creating {}...", plugin);
+            post_graphql::<mutations::PluginCreate, _>(&client, configs.get_backboard(), vars)
+                .await?;
+        } else {
+            let spinner = indicatif::ProgressBar::new_spinner()
+                .with_style(
+                    indicatif::ProgressStyle::default_spinner()
+                        .tick_chars(TICK_STRING)
+                        .template("{spinner:.green} {msg}")?,
+                )
+                .with_message(format!("Creating {plugin}..."));
+            spinner.enable_steady_tick(Duration::from_millis(100));
+            post_graphql::<mutations::PluginCreate, _>(&client, configs.get_backboard(), vars)
+                .await?;
+            spinner.finish_with_message(format!("Created {plugin}"));
+        }
     }
 
     Ok(())

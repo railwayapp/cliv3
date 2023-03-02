@@ -8,6 +8,7 @@ use futures::StreamExt;
 use gzp::{deflate::Gzip, ZBuilder};
 use ignore::WalkBuilder;
 use indicatif::{ProgressBar, ProgressFinish, ProgressIterator, ProgressStyle};
+use is_terminal::IsTerminal;
 use synchronized_writer::SynchronizedWriter;
 use tar::Builder;
 
@@ -30,15 +31,20 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
     let hostname = configs.get_host();
     let client = GQLClient::new_authorized(&configs)?;
     let linked_project = configs.get_linked_project().await?;
-
-    let spinner = ProgressBar::new_spinner()
-        .with_style(
-            ProgressStyle::default_spinner()
-                .tick_chars(TICK_STRING)
-                .template("{spinner:.green} {msg:.cyan.bold}")?,
-        )
-        .with_message("Indexing".to_string());
-    spinner.enable_steady_tick(Duration::from_millis(100));
+    let spinner = if !std::io::stdout().is_terminal() {
+        let spinner = ProgressBar::new_spinner()
+            .with_style(
+                ProgressStyle::default_spinner()
+                    .tick_chars(TICK_STRING)
+                    .template("{spinner:.green} {msg:.cyan.bold}")?,
+            )
+            .with_message("Indexing".to_string());
+        spinner.enable_steady_tick(Duration::from_millis(100));
+        Some(spinner)
+    } else {
+        println!("Indexing...");
+        None
+    };
     let bytes = Vec::<u8>::new();
     let arc = Arc::new(Mutex::new(bytes));
     let mut parz = ZBuilder::<Gzip, _>::new()
@@ -49,21 +55,28 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         let mut builder = WalkBuilder::new(args.path.unwrap_or_else(|| ".".into()));
         let walker = builder.follow_links(true).hidden(false);
         let walked = walker.build().collect::<Vec<_>>();
-        spinner.finish_with_message("Indexed");
+        if let Some(spinner) = spinner {
+            spinner.finish_with_message("Indexed");
+        }
+        if !std::io::stdout().is_terminal() {
+            let pg = ProgressBar::new(walked.len() as u64)
+                .with_style(
+                    ProgressStyle::default_bar()
+                        .template("{spinner:.green} {msg:.cyan.bold} [{bar:20}] {percent}% ")?
+                        .progress_chars("=> ")
+                        .tick_chars(TICK_STRING),
+                )
+                .with_message("Compressing")
+                .with_finish(ProgressFinish::WithMessage("Compressed".into()));
+            pg.enable_steady_tick(Duration::from_millis(100));
 
-        let pg = ProgressBar::new(walked.len() as u64)
-            .with_style(
-                ProgressStyle::default_bar()
-                    .template("{spinner:.green} {msg:.cyan.bold} [{bar:20}] {percent}% ")?
-                    .progress_chars("=> ")
-                    .tick_chars(TICK_STRING),
-            )
-            .with_message("Compressing")
-            .with_finish(ProgressFinish::WithMessage("Compressed".into()));
-        pg.enable_steady_tick(Duration::from_millis(100));
-
-        for entry in walked.into_iter().progress_with(pg) {
-            archive.append_path(entry?.path())?;
+            for entry in walked.into_iter().progress_with(pg) {
+                archive.append_path(entry?.path())?;
+            }
+        } else {
+            for entry in walked.into_iter() {
+                archive.append_path(entry?.path())?;
+            }
         }
     }
     parz.finish()?;
@@ -72,15 +85,20 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         "https://backboard.{hostname}/project/{}/environment/{}/up",
         linked_project.project, linked_project.environment
     ));
-
-    let spinner = ProgressBar::new_spinner()
-        .with_style(
-            ProgressStyle::default_spinner()
-                .tick_chars(TICK_STRING)
-                .template("{spinner:.green} {msg:.cyan.bold}")?,
-        )
-        .with_message("Uploading");
-    spinner.enable_steady_tick(Duration::from_millis(100));
+    let spinner = if !std::io::stdout().is_terminal() {
+        let spinner = ProgressBar::new_spinner()
+            .with_style(
+                ProgressStyle::default_spinner()
+                    .tick_chars(TICK_STRING)
+                    .template("{spinner:.green} {msg:.cyan.bold}")?,
+            )
+            .with_message("Uploading");
+        spinner.enable_steady_tick(Duration::from_millis(100));
+        Some(spinner)
+    } else {
+        println!("Uploading...");
+        None
+    };
 
     let body = arc.lock().unwrap().clone();
     let res = builder
@@ -91,7 +109,9 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         .error_for_status()?;
 
     let body = res.json::<UpResponse>().await?;
-    spinner.finish_with_message("Uploaded");
+    if let Some(spinner) = spinner {
+        spinner.finish_with_message("Uploaded");
+    }
     println!("  {}: {}", "Build Logs".green().bold(), body.logs_url);
     if args.detach {
         return Ok(());
@@ -115,20 +135,20 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         .collect();
     deployments.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     let latest_deployment = deployments.first().context("No deployments found")?;
+    if !std::io::stdout().is_terminal() {
+        let vars = subscriptions::build_logs::Variables {
+            deployment_id: latest_deployment.id.clone(),
+            filter: Some(String::new()),
+            limit: Some(500),
+        };
 
-    let vars = subscriptions::build_logs::Variables {
-        deployment_id: latest_deployment.id.clone(),
-        filter: Some(String::new()),
-        limit: Some(500),
-    };
-
-    let (_client, mut log_stream) = subscribe_graphql::<subscriptions::BuildLogs>(vars).await?;
-    while let Some(Ok(log)) = log_stream.next().await {
-        let log = log.data.context("Failed to retrieve log")?;
-        for line in log.build_logs {
-            println!("{}", line.message);
+        let (_client, mut log_stream) = subscribe_graphql::<subscriptions::BuildLogs>(vars).await?;
+        while let Some(Ok(log)) = log_stream.next().await {
+            let log = log.data.context("Failed to retrieve log")?;
+            for line in log.build_logs {
+                println!("{}", line.message);
+            }
         }
     }
-
     Ok(())
 }

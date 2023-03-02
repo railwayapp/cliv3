@@ -6,6 +6,7 @@ use super::*;
 use anyhow::bail;
 use http_body_util::Full;
 use hyper::{body::Bytes, server::conn::http1, service::service_fn, Request, Response};
+use is_terminal::IsTerminal;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
@@ -19,6 +20,10 @@ pub struct Args {
 }
 
 pub async fn command(args: Args, _json: bool) -> Result<()> {
+    if !std::io::stdout().is_terminal() {
+        bail!("Cannot login in non-interactive mode");
+    }
+
     let mut configs = Configs::new()?;
     let render_config = configs.get_render_config();
 
