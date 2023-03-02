@@ -128,6 +128,14 @@ impl Configs {
         format!("https://backboard.{}/graphql/v2", self.get_host())
     }
 
+    pub fn get_current_directory(&self) -> Result<String> {
+        let current_dir = std::env::current_dir()?;
+        let path = current_dir
+            .to_str()
+            .context("Unable to get current working directory")?;
+        Ok(path.to_owned())
+    }
+
     pub fn get_closest_linked_project_directory(&self) -> Result<String> {
         let current_dir = std::env::current_dir()?;
         let path = current_dir
@@ -161,7 +169,7 @@ impl Configs {
             let data = res.data.context("Invalid project token!")?;
 
             let project = RailwayProject {
-                project_path: self.get_closest_linked_project_directory()?,
+                project_path: self.get_current_directory()?,
                 name: Some(data.project_token.project.name),
                 project: data.project_token.project.id,
                 environment: data.project_token.environment.id,
