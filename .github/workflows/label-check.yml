@@ -6,7 +6,7 @@ on:
 
 jobs:
   label-check:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: jesusvasquez333/verify-pr-label-action@v1.4.0
         with:

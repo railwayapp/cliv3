@@ -9,7 +9,7 @@ env:
 jobs:
   create-release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       rlwy_version: ${{ env.CLI_VERSION }}
 
@@ -56,19 +56,19 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: self-hosted
 
           - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
+            os: self-hosted
 
           - target: i686-unknown-linux-musl
-            os: ubuntu-latest
+            os: self-hosted
 
           - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
+            os: self-hosted
 
           - target: arm-unknown-linux-musleabihf
-            os: ubuntu-latest
+            os: self-hosted
 
           - target: x86_64-apple-darwin
             os: macOS-latest
@@ -101,7 +101,7 @@ jobs:
         with:
           command: build
           args: --release --locked --target ${{ matrix.target }}
-          use-cross: ${{ matrix.os == 'ubuntu-latest' }}
+          use-cross: ${{ matrix.os == 'self-hosted' }}
 
       - name: Prepare binaries [Windows]
         if: matrix.os == 'windows-latest'

@@ -11,7 +11,7 @@ name: CI
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
 
   lints:
     name: Lints
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
     name: Tests
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [self-hosted, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     outputs:
       matrix: ${{ steps.docker-prep.outputs.matrix }}
