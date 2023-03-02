@@ -71,3 +71,4 @@ async-tungstenite = { version = "0.18.0", features = [
   "tokio-runtime",
   "tokio-rustls-native-certs",
 ] }
+is-terminal = "0.4.4"
