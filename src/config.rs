@@ -146,7 +146,7 @@ impl Configs {
     }
 
     pub async fn get_linked_project(&self) -> Result<RailwayProject> {
-        if let Some(token) = Self::get_railway_token() {
+        if Self::get_railway_token().is_some() {
             let vars = queries::project_token::Variables {};
             let client = GQLClient::new_authorized(self)?;
 
