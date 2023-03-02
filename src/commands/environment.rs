@@ -1,10 +1,16 @@
 use std::fmt::Display;
 
+use anyhow::bail;
+use is_terminal::IsTerminal;
+
 use super::{queries::project::ProjectProjectEnvironmentsEdgesNode, *};
 
 /// Change the active environment
 #[derive(Parser)]
-pub struct Args {}
+pub struct Args {
+    /// The environment to link to
+    environment: Option<String>,
+}
 
 pub async fn command(_args: Args, _json: bool) -> Result<()> {
     let mut configs = Configs::new()?;
@@ -26,6 +32,25 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         .iter()
         .map(|env| Environment(&env.node))
         .collect();
+
+    if let Some(environment) = _args.environment {
+        let environment = environments
+            .iter()
+            .find(|env| env.0.id == environment || env.0.name == environment)
+            .context("Environment not found")?;
+        configs.link_project(
+            linked_project.project.clone(),
+            linked_project.name.clone(),
+            environment.0.id.clone(),
+            Some(environment.0.name.clone()),
+        )?;
+        configs.write()?;
+        return Ok(());
+    }
+
+    if !std::io::stdout().is_terminal() {
+        bail!("Environment must be specified when not running in a terminal");
+    }
 
     let environment = inquire::Select::new("Select an environment", environments)
         .with_render_config(configs.get_render_config())

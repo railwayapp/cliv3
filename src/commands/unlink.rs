@@ -1,4 +1,5 @@
 use anyhow::bail;
+use is_terminal::IsTerminal;
 
 use crate::consts::ABORTED_BY_USER;
 
@@ -40,10 +41,15 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
             service.node.name.bold(),
             body.project.name.bold()
         );
-        let confirmed = inquire::Confirm::new("Are you sure you want to unlink this service?")
-            .with_render_config(configs.get_render_config())
-            .with_default(true)
-            .prompt()?;
+        let confirmed = !if std::io::stdout().is_terminal() {
+            inquire::Confirm::new("Are you sure you want to unlink this service?")
+                .with_render_config(configs.get_render_config())
+                .with_default(true)
+                .prompt()?
+        } else {
+            true
+        };
+
         if !confirmed {
             bail!(ABORTED_BY_USER);
         }
@@ -62,10 +68,15 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         println!("Linked to {}", body.project.name.bold());
     }
 
-    let confirmed = inquire::Confirm::new("Are you sure you want to unlink this project?")
-        .with_render_config(configs.get_render_config())
-        .with_default(true)
-        .prompt()?;
+    let confirmed = !if std::io::stdout().is_terminal() {
+        inquire::Confirm::new("Are you sure you want to unlink this project?")
+            .with_render_config(configs.get_render_config())
+            .with_default(true)
+            .prompt()?
+    } else {
+        true
+    };
+
     if !confirmed {
         bail!(ABORTED_BY_USER);
     }

@@ -1,6 +1,7 @@
 use anyhow::bail;
+use is_terminal::IsTerminal;
 
-use crate::consts::ABORTED_BY_USER;
+use crate::consts::{ABORTED_BY_USER, NON_INTERACTIVE_FAILURE};
 
 use super::*;
 
@@ -9,6 +10,9 @@ use super::*;
 pub struct Args {}
 
 pub async fn command(_args: Args, _json: bool) -> Result<()> {
+    if !std::io::stdout().is_terminal() {
+        bail!(NON_INTERACTIVE_FAILURE);
+    }
     let config = Configs::new()?;
     let confirm = inquire::Confirm::new("Open the browser")
         .with_default(true)

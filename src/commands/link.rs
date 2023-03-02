@@ -1,5 +1,8 @@
 use std::fmt::Display;
 
+use anyhow::bail;
+use is_terminal::IsTerminal;
+
 use crate::{
     commands::queries::user_projects::UserProjectsMeTeamsEdgesNode, consts::PROJECT_NOT_FOUND,
 };
@@ -48,6 +51,8 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
                 })
                 .context("Environment not found")?;
             ProjectEnvironment(&environment.node)
+        } else if !std::io::stdout().is_terminal() {
+            bail!("Environment must be provided when not running in a terminal");
         } else {
             inquire::Select::new(
                 "Select an environment",
@@ -70,6 +75,8 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         )?;
         configs.write()?;
         return Ok(());
+    } else if !std::io::stdout().is_terminal() {
+        bail!("Project must be provided when not running in a terminal");
     }
 
     let vars = queries::user_projects::Variables {};
