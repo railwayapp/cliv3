@@ -99,6 +99,10 @@ impl Configs {
         std::env::var("RAILWAY_TOKEN").ok()
     }
 
+    pub fn get_railway_api_token() -> Option<String> {
+        std::env::var("RAILWAY_API_TOKEN").ok()
+    }
+
     pub fn get_environment_id() -> Environment {
         match std::env::var("RAILWAY_ENV")
             .map(|env| env.to_lowercase())
@@ -107,6 +111,7 @@ impl Configs {
             Ok("production") => Environment::Production,
             Ok("staging") => Environment::Staging,
             Ok("dev") => Environment::Dev,
+            Ok("develop") => Environment::Dev,
             _ => Environment::Production,
         }
     }

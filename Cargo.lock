@@ -1331,6 +1331,7 @@ dependencies = [
  "indicatif",
  "indoc",
  "inquire",
+ "is-terminal",
  "names",
  "num_cpus",
  "open",

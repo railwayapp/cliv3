@@ -14,6 +14,11 @@ impl GQLClient {
         let mut headers = HeaderMap::new();
         if let Some(token) = &Configs::get_railway_token() {
             headers.insert("project-access-token", HeaderValue::from_str(token)?);
+        } else if let Some(token) = &Configs::get_railway_api_token() {
+            headers.insert(
+                "authorization",
+                HeaderValue::from_str(&format!("Bearer {token}"))?,
+            );
         } else if let Some(token) = &configs.root_config.user.token {
             if token.is_empty() {
                 bail!("Unauthorized. Please login with `railway login`")
@@ -25,7 +30,10 @@ impl GQLClient {
         } else {
             bail!("Unauthorized. Please login with `railway login`")
         }
-        headers.insert("x-source", HeaderValue::from_static("Railway CLI v3"));
+        headers.insert(
+            "x-source",
+            HeaderValue::from_static(consts::get_user_agent()),
+        );
         let client = Client::builder()
             .danger_accept_invalid_certs(matches!(Configs::get_environment_id(), Environment::Dev))
             .user_agent(consts::get_user_agent())
@@ -37,7 +45,10 @@ impl GQLClient {
     #[allow(dead_code)]
     pub fn new_unauthorized() -> Result<Client> {
         let mut headers = HeaderMap::new();
-        headers.insert("x-source", HeaderValue::from_static("Railway CLI v3"));
+        headers.insert(
+            "x-source",
+            HeaderValue::from_static(consts::get_user_agent()),
+        );
         let client = Client::builder()
             .danger_accept_invalid_certs(matches!(Configs::get_environment_id(), Environment::Dev))
             .user_agent(consts::get_user_agent())

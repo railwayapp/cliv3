@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::bail;
+use is_terminal::IsTerminal;
 
 use crate::consts::TICK_STRING;
 
@@ -57,31 +58,49 @@ pub async fn command(_args: Args, _json: bool) -> Result<()> {
         bail!("Domain already exists on service");
     }
 
-    let spinner = indicatif::ProgressBar::new_spinner()
-        .with_style(
-            indicatif::ProgressStyle::default_spinner()
-                .tick_chars(TICK_STRING)
-                .template("{spinner:.green} {msg}")?,
-        )
-        .with_message("Creating domain...");
-    spinner.enable_steady_tick(Duration::from_millis(100));
-
     let vars = mutations::service_domain_create::Variables {
         service_id: service,
         environment_id: linked_project.environment.clone(),
     };
 
-    let res =
-        post_graphql::<mutations::ServiceDomainCreate, _>(&client, configs.get_backboard(), vars)
-            .await?;
+    if !std::io::stdout().is_terminal() {
+        println!("Creating domain...");
 
-    let body = res.data.context("Failed to create service domain.")?;
+        let res = post_graphql::<mutations::ServiceDomainCreate, _>(
+            &client,
+            configs.get_backboard(),
+            vars,
+        )
+        .await?;
 
-    let domain = body.service_domain_create.domain;
+        let body = res.data.context("Failed to create service domain.")?;
+        let domain = body.service_domain_create.domain;
 
-    spinner.finish_and_clear();
+        println!("Service Domain created: {}", domain.bold());
+    } else {
+        let spinner = indicatif::ProgressBar::new_spinner()
+            .with_style(
+                indicatif::ProgressStyle::default_spinner()
+                    .tick_chars(TICK_STRING)
+                    .template("{spinner:.green} {msg}")?,
+            )
+            .with_message("Creating domain...");
+        spinner.enable_steady_tick(Duration::from_millis(100));
 
-    println!("Service Domain created: {}", domain.bold());
+        let res = post_graphql::<mutations::ServiceDomainCreate, _>(
+            &client,
+            configs.get_backboard(),
+            vars,
+        )
+        .await?;
+
+        let body = res.data.context("Failed to create service domain.")?;
+        let domain = body.service_domain_create.domain;
+
+        spinner.finish_and_clear();
+
+        println!("Service Domain created: {}", domain.bold());
+    }
 
     Ok(())
 }

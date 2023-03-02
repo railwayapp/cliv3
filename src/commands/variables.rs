@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use anyhow::bail;
+use is_terminal::IsTerminal;
 
 use crate::{consts::NO_SERVICE_LINKED, table::Table};
 
@@ -138,6 +139,9 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
 
 fn prompt_plugin(plugins: Vec<Plugin>) -> Result<Plugin> {
     let configs = Configs::new()?;
+    if !std::io::stdout().is_terminal() {
+        bail!("Plugin must be provided when not running in a terminal")
+    }
     let plugin = inquire::Select::new("Select a plugin", plugins)
         .with_render_config(configs.get_render_config())
         .prompt()?;

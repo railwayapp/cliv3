@@ -9,7 +9,8 @@ use super::{queries::project::ProjectProjectServicesEdgesNode, *};
 /// Link a service to the current project
 #[derive(Parser)]
 pub struct Args {
-    service_id: Option<String>,
+    /// The service to link
+    service: Option<String>,
 }
 
 pub async fn command(args: Args, _json: bool) -> Result<()> {
@@ -25,8 +26,22 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
 
     let body = res.data.context("Failed to retrieve response body")?;
 
-    if let Some(project_id) = args.service_id {
-        let vars = queries::project::Variables { id: project_id };
+    let services: Vec<_> = body
+        .project
+        .services
+        .edges
+        .iter()
+        .map(|env| Service(&env.node))
+        .collect();
+
+    if let Some(service) = args.service {
+        let service = services
+            .iter()
+            .find(|env| env.0.id == service || env.0.name == service)
+            .context("Service not found")?;
+        let vars = queries::project::Variables {
+            id: service.0.id.clone(),
+        };
 
         let res =
             post_graphql::<queries::Project, _>(&client, configs.get_backboard(), vars).await?;
@@ -41,14 +56,6 @@ pub async fn command(args: Args, _json: bool) -> Result<()> {
         configs.write()?;
         return Ok(());
     }
-
-    let services: Vec<_> = body
-        .project
-        .services
-        .edges
-        .iter()
-        .map(|env| Service(&env.node))
-        .collect();
 
     if services.is_empty() {
         bail!("No services found");
