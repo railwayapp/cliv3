@@ -204,7 +204,7 @@ impl Configs {
         environment_id: String,
         environment_name: Option<String>,
     ) -> Result<()> {
-        let path = self.get_closest_linked_project_directory()?;
+        let path = self.get_current_directory()?;
         let project = RailwayProject {
             project_path: path.clone(),
             name,
