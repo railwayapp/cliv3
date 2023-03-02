@@ -123,16 +123,30 @@ impl Configs {
         format!("https://backboard.{}/graphql/v2", self.get_host())
     }
 
-    pub fn get_current_working_directory() -> Result<String> {
+    pub fn get_closest_linked_project_directory(&self) -> Result<String> {
         let current_dir = std::env::current_dir()?;
         let path = current_dir
             .to_str()
             .context("Unable to get current working directory")?;
-        Ok(path.into())
+        let mut current_path = PathBuf::from(path);
+        loop {
+            let path = current_path
+                .to_str()
+                .context("Unable to get current working directory")?
+                .to_owned();
+            let config = self.root_config.projects.get(&path);
+            if config.is_some() {
+                return Ok(path);
+            }
+            if !current_path.pop() {
+                break;
+            }
+        }
+        Err(anyhow::anyhow!("No linked project found"))
     }
 
     pub async fn get_linked_project(&self) -> Result<RailwayProject> {
-        if let Some(token) = Self::get_railway_token() {
+        if Self::get_railway_token().is_some() {
             let vars = queries::project_token::Variables {};
             let client = GQLClient::new_authorized(self)?;
 
@@ -142,7 +156,7 @@ impl Configs {
             let data = res.data.context("Invalid project token!")?;
 
             let project = RailwayProject {
-                project_path: Self::get_current_working_directory()?,
+                project_path: self.get_closest_linked_project_directory()?,
                 name: Some(data.project_token.project.name),
                 project: data.project_token.project.id,
                 environment: data.project_token.environment.id,
@@ -151,8 +165,7 @@ impl Configs {
             };
             return Ok(project);
         }
-
-        let path = Self::get_current_working_directory()?;
+        let path = self.get_closest_linked_project_directory()?;
         let project = self
             .root_config
             .projects
@@ -162,7 +175,7 @@ impl Configs {
     }
 
     pub fn get_linked_project_mut(&mut self) -> Result<&mut RailwayProject> {
-        let path = Self::get_current_working_directory()?;
+        let path = self.get_closest_linked_project_directory()?;
         let project = self
             .root_config
             .projects
@@ -178,7 +191,7 @@ impl Configs {
         environment_id: String,
         environment_name: Option<String>,
     ) -> Result<()> {
-        let path = Self::get_current_working_directory()?;
+        let path = self.get_closest_linked_project_directory()?;
         let project = RailwayProject {
             project_path: path.clone(),
             name,
@@ -198,7 +211,7 @@ impl Configs {
     }
 
     pub fn unlink_project(&mut self) -> Result<RailwayProject> {
-        let path = Self::get_current_working_directory()?;
+        let path = self.get_closest_linked_project_directory()?;
         let project = self
             .root_config
             .projects
