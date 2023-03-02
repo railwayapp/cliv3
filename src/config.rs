@@ -156,7 +156,8 @@ impl Configs {
             let data = res.data.context("Invalid project token!")?;
 
             let project = RailwayProject {
-                project_path: self.get_closest_linked_project_directory()?,
+                // project_path: self.get_closest_linked_project_directory()?,
+                project_path: ".".to_string(),
                 name: Some(data.project_token.project.name),
                 project: data.project_token.project.id,
                 environment: data.project_token.environment.id,
@@ -191,16 +192,18 @@ impl Configs {
         environment_id: String,
         environment_name: Option<String>,
     ) -> Result<()> {
-        let path = self.get_closest_linked_project_directory()?;
+        // let path = self.get_closest_linked_project_directory()?;
         let project = RailwayProject {
-            project_path: path.clone(),
+            // project_path: path.clone(),
+            project_path: ".".to_string(),
             name,
             project: project_id,
             environment: environment_id,
             environment_name,
             service: None,
         };
-        self.root_config.projects.insert(path, project);
+        // self.root_config.projects.insert(path, project);
+        self.root_config.projects.insert(".".to_string(), project);
         Ok(())
     }
 

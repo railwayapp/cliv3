@@ -12,6 +12,8 @@ use super::{
 /// Show variables for active environment
 #[derive(Parser)]
 pub struct Args {
+    /// Show variables for a specific environment
+    environment: Option<String>,
     /// Show variables for a plugin
     #[clap(short, long)]
     plugin: bool,
@@ -45,6 +47,24 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         .map(|plugin| Plugin(&plugin.node))
         .collect();
 
+    let environment = if let Some(environment) = args.environment.clone() {
+        let envs = &body
+            .project
+            .environments
+            .edges
+            .iter()
+            .map(|env| env.node.clone())
+            .find(|env| env.name == environment);
+
+        if envs.is_none() {
+            bail!("Environment not found");
+        }
+
+        envs.clone().unwrap().id
+    } else {
+        linked_project.environment.clone()
+    };
+
     let (vars, name) = if args.plugin {
         if plugins.is_empty() {
             bail!("No plugins found");
@@ -52,7 +72,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         let plugin = prompt_plugin(plugins)?;
         (
             queries::variables::Variables {
-                environment_id: linked_project.environment.clone(),
+                environment_id: environment,
                 project_id: linked_project.project.clone(),
                 service_id: None,
                 plugin_id: Some(plugin.0.id.clone()),
@@ -86,7 +106,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
             .context("Service not found")?;
         (
             queries::variables::Variables {
-                environment_id: linked_project.environment.clone(),
+                environment_id: environment,
                 project_id: linked_project.project.clone(),
                 service_id: Some(service.clone()),
                 plugin_id: None,
@@ -100,7 +120,7 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
         let plugin = prompt_plugin(plugins)?;
         (
             queries::variables::Variables {
-                environment_id: linked_project.environment.clone(),
+                environment_id: environment,
                 project_id: linked_project.project.clone(),
                 service_id: None,
                 plugin_id: Some(plugin.0.id.clone()),
