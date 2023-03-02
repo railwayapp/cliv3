@@ -25,7 +25,7 @@ impl GQLClient {
         } else {
             bail!("Unauthorized. Please login with `railway login`")
         }
-        headers.insert("x-source", HeaderValue::from_static("cli-rs"));
+        headers.insert("x-source", HeaderValue::from_static("Railway CLI v3"));
         let client = Client::builder()
             .danger_accept_invalid_certs(matches!(Configs::get_environment_id(), Environment::Dev))
             .user_agent(consts::get_user_agent())
@@ -37,7 +37,7 @@ impl GQLClient {
     #[allow(dead_code)]
     pub fn new_unauthorized() -> Result<Client> {
         let mut headers = HeaderMap::new();
-        headers.insert("x-source", HeaderValue::from_static("cli-rs"));
+        headers.insert("x-source", HeaderValue::from_static("Railway CLI v3"));
         let client = Client::builder()
             .danger_accept_invalid_certs(matches!(Configs::get_environment_id(), Environment::Dev))
             .user_agent(consts::get_user_agent())

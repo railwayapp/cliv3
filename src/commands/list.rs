@@ -14,7 +14,7 @@ pub struct Args {}
 pub async fn command(_args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project().ok();
+    let linked_project = configs.get_linked_project().await.ok();
 
     let vars = queries::user_projects::Variables {};
 
@@ -41,12 +41,13 @@ pub async fn command(_args: Args, json: bool) -> Result<()> {
     if !json {
         println!("{}", "Personal".bold());
         for project in &my_projects {
-            let project_name =
-                if linked_project.is_some() && project.id == linked_project.unwrap().project {
-                    project.name.purple().bold()
-                } else {
-                    project.name.white()
-                };
+            let project_name = if linked_project.is_some()
+                && project.id == linked_project.as_ref().unwrap().project
+            {
+                project.name.purple().bold()
+            } else {
+                project.name.white()
+            };
             println!("  {project_name}");
         }
     }
@@ -80,7 +81,7 @@ pub async fn command(_args: Args, json: bool) -> Result<()> {
             if !json {
                 for project in &projects {
                     let project_name = if linked_project.is_some()
-                        && project.id == linked_project.unwrap().project
+                        && project.id == linked_project.as_ref().unwrap().project
                     {
                         project.name.purple().bold()
                     } else {

@@ -18,6 +18,10 @@ pub struct Args {
     #[clap(short, long)]
     plugin: bool,
 
+    /// Show variables for a specific service
+    #[clap(short, long)]
+    service: Option<String>,
+
     /// Show variables in KV format
     #[clap(short, long)]
     kv: bool,
@@ -26,7 +30,7 @@ pub struct Args {
 pub async fn command(args: Args, json: bool) -> Result<()> {
     let configs = Configs::new()?;
     let client = GQLClient::new_authorized(&configs)?;
-    let linked_project = configs.get_linked_project()?;
+    let linked_project = configs.get_linked_project().await?;
 
     let vars = queries::project::Variables {
         id: linked_project.project.to_owned(),
@@ -74,6 +78,23 @@ pub async fn command(args: Args, json: bool) -> Result<()> {
                 plugin_id: Some(plugin.0.id.clone()),
             },
             format!("{plugin}"),
+        )
+    } else if let Some(ref service) = args.service {
+        let service_name = body
+            .project
+            .services
+            .edges
+            .iter()
+            .find(|edge| edge.node.id == *service || edge.node.name == *service)
+            .context("Service not found")?;
+        (
+            queries::variables::Variables {
+                environment_id: linked_project.environment.clone(),
+                project_id: linked_project.project.clone(),
+                service_id: Some(service_name.node.id.clone()),
+                plugin_id: None,
+            },
+            service_name.node.name.clone(),
         )
     } else if let Some(ref service) = linked_project.service {
         let service_name = body

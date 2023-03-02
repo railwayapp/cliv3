@@ -1,3 +1,7 @@
+type AccessRule {
+	disallowed: String
+}
+
 """
 The aggregated usage of a single measurement.
 """
@@ -40,6 +44,10 @@ type BanReasonHistory implements Node {
 	banReason: String
 	createdAt: DateTime!
 	id: ID!
+}
+
+input BaseEnvironmentOverrideInput {
+	baseEnvironmentOverrideId: String
 }
 
 enum Builder {
@@ -105,6 +113,12 @@ type Deployment implements Node {
 
 scalar DeploymentMeta
 
+type DeploymentSnapshot implements Node {
+	createdAt: DateTime!
+	id: ID!
+	updatedAt: DateTime!
+}
+
 enum DeploymentStatus {
 	BUILDING
 	CRASHED
@@ -129,6 +143,17 @@ type DeploymentTrigger implements Node {
 	repository: String!
 	serviceId: String
 	validCheckSuites: Int!
+}
+
+input DeploymentTriggerCreateInput {
+	branch: String!
+	checkSuites: Boolean
+	environmentId: String!
+	projectId: String!
+	provider: String!
+	repository: String!
+	rootDirectory: String
+	serviceId: String!
 }
 
 input DeploymentTriggerUpdateInput {
@@ -226,6 +251,12 @@ type EnvironmentServiceInstancesConnectionEdge {
 	node: ServiceInstance!
 }
 
+input EnvironmentTriggersDeployInput {
+	environmentId: String!
+	projectId: String!
+	serviceId: String!
+}
+
 type EnvironmentVariablesConnection {
 	edges: [EnvironmentVariablesConnectionEdge!]!
 	pageInfo: PageInfo!
@@ -264,6 +295,18 @@ type Event implements Node {
 	projectId: String!
 }
 
+input EventBatchTrackInput {
+	events: [EventTrackInput!]!
+}
+
+scalar EventProperties
+
+input EventTrackInput {
+	eventName: String!
+	properties: EventProperties
+	ts: String!
+}
+
 type ExecutionTime {
 	projectId: String!
 
@@ -271,6 +314,18 @@ type ExecutionTime {
 	The total number of minutes that the project has been actively running for.
 	"""
 	totalTimeMinutes: Float!
+}
+
+input ExplicitOwnerInput {
+	"""
+	The ID of the owner
+	"""
+	id: String!
+
+	"""
+	The type of owner
+	"""
+	type: ResourceOwnerType!
 }
 
 type GitHubBranch {
@@ -291,6 +346,12 @@ type GitHubRepo {
 	name: String!
 }
 
+input GitHubRepoUpdateInput {
+	environmentId: String!
+	projectId: String!
+	serviceId: String!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -302,6 +363,12 @@ input JobApplicationCreateInput {
 	name: String!
 	resume: Upload!
 	why: String!
+}
+
+type LockdownStatus {
+	allProvisionsDisabledMsg: String
+	anonProvisionsDisabledMsg: String
+	signupsDisabledMsg: String
 }
 
 type Log {
@@ -380,7 +447,22 @@ type MetricsResult {
 	values: [Metric!]!
 }
 
+input MissingCommandAlertInput {
+	page: String!
+	text: String!
+}
+
 type Mutation {
+	"""
+	Toggles all provisions on or off across the platform.
+	"""
+	allProvisionsToggle(input: TogglePlatformServiceInput!): Boolean!
+
+	"""
+	Toggles anonymous provisions on or off across the platform.
+	"""
+	anonProvisionsToggle(input: TogglePlatformServiceInput!): Boolean!
+
 	"""
 	Creates a new API token.
 	"""
@@ -390,6 +472,14 @@ type Mutation {
 	Deletes an API token.
 	"""
 	apiTokenDelete(id: String!): Boolean!
+
+	"""
+	Sets the base environment override for a deployment trigger.
+	"""
+	baseEnvironmentOverride(
+		id: String!
+		input: BaseEnvironmentOverrideInput!
+	): Boolean!
 
 	"""
 	Creates a new custom domain.
@@ -425,6 +515,18 @@ type Mutation {
 	Rolls back to a deployment.
 	"""
 	deploymentRollback(id: String!): Boolean!
+
+	"""
+	Creates a deployment trigger.
+	"""
+	deploymentTriggerCreate(
+		input: DeploymentTriggerCreateInput!
+	): DeploymentTrigger!
+
+	"""
+	Deletes a deployment trigger.
+	"""
+	deploymentTriggerDelete(id: String!): Boolean!
 	deploymentTriggerUpdate(
 		id: String!
 		input: DeploymentTriggerUpdateInput!
@@ -439,6 +541,26 @@ type Mutation {
 	Deletes an environment.
 	"""
 	environmentDelete(id: String!): Boolean!
+
+	"""
+	Deploys all connected triggers for an environment.
+	"""
+	environmentTriggersDeploy(input: EnvironmentTriggersDeployInput!): Boolean!
+
+	"""
+	Track a batch of events for authenticated user
+	"""
+	eventBatchTrack(input: EventBatchTrackInput!): Boolean!
+
+	"""
+	Track event for authenticated user
+	"""
+	eventTrack(input: EventTrackInput!): Boolean!
+
+	"""
+	Updates a GitHub repo through the linked template
+	"""
+	githubRepoUpdate(input: GitHubRepoUpdateInput!): Boolean!
 
 	"""
 	Creates a new job application.
@@ -459,6 +581,11 @@ type Mutation {
 	Deletes session for current user if it exists
 	"""
 	logout: Boolean!
+
+	"""
+	Alert the team of a missing command palette command
+	"""
+	missingCommandAlert(input: MissingCommandAlertInput!): Boolean!
 
 	"""
 	Creates a new plugin.
@@ -495,6 +622,36 @@ type Mutation {
 	Deletes a project.
 	"""
 	projectDelete(id: String!): Boolean!
+
+	"""
+	Remove user from a project
+	"""
+	projectMemberRemove(input: ProjectMemberRemoveInput!): [ProjectMember!]!
+
+	"""
+	Change the role for a user within a project
+	"""
+	projectMemberUpdate(input: ProjectMemberUpdateInput!): ProjectMember!
+
+	"""
+	Create a token for a project that has access to a specific environment
+	"""
+	projectTokenCreate(input: ProjectTokenCreateInput!): String!
+
+	"""
+	Delete a project token
+	"""
+	projectTokenDelete(id: String!): Boolean!
+
+	"""
+	Confirm the transfer of project ownership
+	"""
+	projectTransferConfirm(input: ProjectTransferConfirmInput!): Boolean!
+
+	"""
+	Initiate the transfer of project ownership
+	"""
+	projectTransferInitiate(input: ProjectTransferInitiateInput!): Boolean!
 
 	"""
 	Updates a project.
@@ -561,6 +718,11 @@ type Mutation {
 	sharedVariableConfigure(input: SharedVariableConfigureInput!): Variable!
 
 	"""
+	Toggles signups on or off across the platform.
+	"""
+	signupsToggle(input: TogglePlatformServiceInput!): Boolean!
+
+	"""
 	Creates a support request.
 	"""
 	supportRequest(input: SupportRequestInput!): Boolean!
@@ -586,6 +748,11 @@ type Mutation {
 	teamUnban(id: String!): Boolean!
 
 	"""
+	Logs panics from CLI to Datadog
+	"""
+	telemetrySend(input: TelemetrySendInput!): Boolean!
+
+	"""
 	Creates a template.
 	"""
 	templateCreate(input: TemplateCreateInput!): Template!
@@ -599,6 +766,16 @@ type Mutation {
 	Deploys a template.
 	"""
 	templateDeploy(input: TemplateDeployInput!): TemplateDeployPayload!
+
+	"""
+	Publishes a template.
+	"""
+	templatePublish(id: String!, input: TemplatePublishInput!): Boolean!
+
+	"""
+	Unpublishes a template.
+	"""
+	templateUnpublish(id: String!): Boolean!
 
 	"""
 	Updates a template.
@@ -655,6 +832,11 @@ type PageInfo {
 	hasNextPage: Boolean!
 	hasPreviousPage: Boolean!
 	startCursor: String
+}
+
+enum PlatformServiceStatus {
+	DISABLE
+	ENABLE
 }
 
 type Plugin implements Node {
@@ -842,6 +1024,17 @@ type ProjectMember {
 	role: ProjectRole!
 }
 
+input ProjectMemberRemoveInput {
+	projectId: String!
+	userId: String!
+}
+
+input ProjectMemberUpdateInput {
+	projectId: String!
+	role: ProjectRole!
+	userId: String!
+}
+
 type ProjectPermission implements Node {
 	id: ID!
 	projectId: String!
@@ -869,6 +1062,13 @@ type ProjectProjectPermissionsConnectionEdge {
 	node: ProjectPermission!
 }
 
+type ProjectResourceAccess {
+	customDomain: AccessRule!
+	deployment: AccessRule!
+	environment: AccessRule!
+	plugin: AccessRule!
+}
+
 enum ProjectRole {
 	ADMIN
 	MEMBER
@@ -883,6 +1083,33 @@ type ProjectServicesConnection {
 type ProjectServicesConnectionEdge {
 	cursor: String!
 	node: Service!
+}
+
+type ProjectToken implements Node {
+	createdAt: DateTime!
+	displayToken: String!
+	environment: Environment!
+	environmentId: String!
+	id: ID!
+	name: String!
+	project: Project!
+	projectId: String!
+}
+
+input ProjectTokenCreateInput {
+	environmentId: String!
+	name: String!
+	projectId: String!
+}
+
+input ProjectTransferConfirmInput {
+	ownershipTransferId: String!
+	projectId: String!
+}
+
+input ProjectTransferInitiateInput {
+	memberId: String!
+	projectId: String!
 }
 
 input ProjectUpdateInput {
@@ -947,8 +1174,16 @@ type Query {
 	buildLogs(
 		deploymentId: String!
 		endDate: DateTime
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
 		filter: String
-		limit: Int
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
 		startDate: DateTime
 	): [Log!]!
 	changelogBlockImage(id: String!): String!
@@ -964,10 +1199,23 @@ type Query {
 	deploymentLogs(
 		deploymentId: String!
 		endDate: DateTime
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
 		filter: String
-		limit: Int
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
 		startDate: DateTime
 	): [Log!]!
+
+	"""
+	Get a short-lived URL to the deployment snapshot code
+	"""
+	deploymentSnapshotCodeUri(deploymentId: String!): String!
 
 	"""
 	All deployment triggers.
@@ -1050,6 +1298,11 @@ type Query {
 	Get a list of scopes the user has installed the installation to
 	"""
 	githubWritableScopes: [String!]!
+
+	"""
+	Returns the current lockdown status of the platform.
+	"""
+	lockdownStatus: LockdownStatus!
 	me: User!
 
 	"""
@@ -1102,13 +1355,47 @@ type Query {
 	pluginLogs(
 		endDate: DateTime
 		environmentId: String!
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
 		filter: String
-		limit: Int
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
 		pluginId: String!
 		startDate: DateTime
 	): [Log!]!
 	preferences(token: String): Preferences!
 	project(id: String!): Project!
+
+	"""
+	Gets users who belong to a project along with their role
+	"""
+	projectMembers(projectId: String!): [ProjectMember!]!
+
+	"""
+	Get resource access rules for project-specific actions
+	"""
+	projectResourceAccess(projectId: String!): ProjectResourceAccess!
+
+	"""
+	Get a single project token by the value in the header
+	"""
+	projectToken: ProjectToken!
+
+	"""
+	Get all project tokens for a project
+	"""
+	projectTokens(
+		after: String
+		before: String
+		first: Int
+		last: Int
+		projectId: String!
+	): QueryProjectTokensConnection!
 	projects(
 		after: String
 		before: String
@@ -1126,7 +1413,12 @@ type Query {
 	referralInfo: ReferralInfo!
 
 	"""
-	Suggeted service domain
+	Get resource access for the current user or team
+	"""
+	resourceAccess(explicitResourceOwner: ExplicitOwnerInput): ResourceAccess!
+
+	"""
+	Suggested service domain
 	"""
 	suggestedServiceDomain(
 		environmentId: String!
@@ -1239,6 +1531,16 @@ type QueryEventsConnectionEdge {
 	node: Event!
 }
 
+type QueryProjectTokensConnection {
+	edges: [QueryProjectTokensConnectionEdge!]!
+	pageInfo: PageInfo!
+}
+
+type QueryProjectTokensConnectionEdge {
+	cursor: String!
+	node: ProjectToken!
+}
+
 type QueryProjectsConnection {
 	edges: [QueryProjectsConnectionEdge!]!
 	pageInfo: PageInfo!
@@ -1292,6 +1594,15 @@ input ReferralInfoUpdateInput {
 type ReferralStats {
 	credited: Int!
 	pending: Int!
+}
+
+type ResourceAccess {
+	project: AccessRule!
+}
+
+enum ResourceOwnerType {
+	TEAM
+	USER
 }
 
 enum RestartPolicyType {
@@ -1455,24 +1766,63 @@ input SharedVariableConfigureInput {
 	projectId: String!
 }
 
+type SimilarTemplate {
+	code: String!
+	deploys: Int!
+	description: String
+	name: String!
+}
+
 type Subscription {
 	"""
 	Stream logs for a build
 	"""
-	buildLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+	buildLogs(
+		deploymentId: String!
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
+		filter: String
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
+	): [Log!]!
 
 	"""
 	Stream logs for a deployment
 	"""
-	deploymentLogs(deploymentId: String!, filter: String, limit: Int): [Log!]!
+	deploymentLogs(
+		deploymentId: String!
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
+		filter: String
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
+	): [Log!]!
 
 	"""
 	Stream logs for a plugin
 	"""
 	pluginLogs(
 		environmentId: String!
+
+		"""
+		Filter logs by a string. Providing an empty value will match all logs.
+		"""
 		filter: String
-		limit: Int
+
+		"""
+		Limit the number of logs returned. Defaults to 100.
+		"""
+		limit: Int! = 100
 		pluginId: String!
 	): [Log!]!
 }
@@ -1517,10 +1867,20 @@ enum TeamRole {
 	MEMBER
 }
 
+input TelemetrySendInput {
+	command: String!
+	environmentId: String
+	error: String!
+	projectId: String
+	stacktrace: String!
+	version: String
+}
+
 type Template implements Node {
 	code: String!
 	config: TemplateConfig!
 	createdAt: DateTime!
+	creator: TemplateCreator
 	demoProjectId: String
 	id: ID!
 	metadata: TemplateMetadata!
@@ -1531,6 +1891,8 @@ type Template implements Node {
 		first: Int
 		last: Int
 	): TemplateServicesConnection!
+	similarTemplates: [SimilarTemplate!]!
+	status: TemplateStatus!
 	userId: String
 }
 
@@ -1541,6 +1903,11 @@ input TemplateCreateInput {
 	demoProjectId: String
 	metadata: TemplateMetadata!
 	services: [TemplateServiceCreateInput!]!
+}
+
+type TemplateCreator {
+	avatar: String
+	name: String
 }
 
 input TemplateDeployInput {
@@ -1572,6 +1939,13 @@ input TemplateDeployService {
 }
 
 scalar TemplateMetadata
+
+input TemplatePublishInput {
+	category: String!
+	description: String!
+	image: String
+	readme: String!
+}
 
 type TemplateReadme {
 	description: String
@@ -1613,11 +1987,22 @@ type TemplateServicesConnectionEdge {
 	node: TemplateService!
 }
 
+enum TemplateStatus {
+	HIDDEN
+	PUBLISHED
+	UNPUBLISHED
+}
+
 input TemplateUpdateInput {
 	config: TemplateConfig!
 	demoProjectId: String
 	metadata: TemplateMetadata!
 	services: [TemplateServiceUpdateInput!]!
+}
+
+input TogglePlatformServiceInput {
+	reason: String
+	status: PlatformServiceStatus!
 }
 
 type TwoFactorInfo {
