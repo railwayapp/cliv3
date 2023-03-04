@@ -1,4 +1,4 @@
-# Railway CLI (3.x.x)
+# Railway CLI
 
 [![CI](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml/badge.svg)](https://github.com/railwayapp/cliv3/actions/workflows/ci.yml)
 
@@ -22,6 +22,22 @@ Currently pre-release. We are looking for feedback and suggestions. Please join 
 ```bash
 cargo install railwayapp --locked
 ```
+### Homebrew
+
+```bash 
+brew install railway
+```
+
+### NPM
+```bash
+npm install -g @railway/cli
+```
+### Bash
+```bash
+curl -fsSL https://cli.new | sh
+```
+
+
 ### From source
 See [CONTRIBUTING.md](https://github.com/railwayapp/cliv3/blob/master/CONTRIBUTING.md) for information on setting up this repo locally.
 
